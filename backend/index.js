@@ -1,11 +1,17 @@
-const express = require('express');
-const app = express();
-const PORT = process.env.PORT || 3000;
+const mysql = require('mysql2');
+require('dotenv').config();
 
-app.get('/', (req, res) => {
-  res.send('Servidor de CafeNova-App funcionando');
+const connection = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+connection.connect((err) => {
+  if (err) {
+    console.error('Error conectando a la base de datos: ' + err.stack);
+    return;
+  }
+  console.log('¡Conectado a la base de datos de CafeNova como ID ' + connection.threadId);
 });
