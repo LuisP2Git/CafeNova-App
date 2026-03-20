@@ -1,0 +1,10 @@
+# Dependencias (Pesado)
+node_modules/
+
+# Variables de entorno (Privado)
+.env
+
+# Archivos del sistema (Basura)
+.DS_Store
+Thumbs.db
+dist/
