@@ -15,5 +15,6 @@
             "username": "root",
             "password": ""
         }
-    ]
+    ],
+    "cmake.sourceDirectory": "C:/Users/lclat/CafeNova-App/frontend/linux"
 }

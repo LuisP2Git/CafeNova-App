@@ -1,8 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/register_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+
+  final usuarioController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  Future<void> login() async {
+    final url = Uri.parse('http://localhost:3000/login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nombre_usuario': usuarioController.text,
+          'password': passwordController.text,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login exitoso')),
+        );
+
+        print(data);
+
+        // Aquí luego puedes navegar a otra pantalla
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Error')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error de conexión')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +83,8 @@ class LoginScreen extends StatelessWidget {
 
               const Text(
                 "Te damos la bienvenida a cafenova",
-                textAlign: TextAlign.center, style: TextStyle(fontSize: 25, color: Color.fromARGB(255, 79, 88, 76)),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 25, color: Color.fromARGB(255, 79, 88, 76)),
               ),
 
               const SizedBox(height: 20),
@@ -50,6 +97,7 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               TextField(
+                controller: usuarioController,
                 decoration: InputDecoration(
                   hintText: "Nombre de usuario",
                   filled: true,
@@ -64,6 +112,7 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               TextField(
+                controller: passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Contraseña",
@@ -81,7 +130,7 @@ class LoginScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6B7F66),
                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -89,7 +138,10 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text("Iniciar sesión", style: TextStyle(color: Color(0xFFF5F1ED), fontSize: 16), ),
+                  child: const Text(
+                    "Iniciar sesión",
+                    style: TextStyle(color: Color(0xFFF5F1ED), fontSize: 16),
+                  ),
                 ),
               ),
 
