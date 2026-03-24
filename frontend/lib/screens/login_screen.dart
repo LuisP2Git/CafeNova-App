@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/register_screen.dart';
+import 'package:frontend/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -16,39 +17,45 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   Future<void> login() async {
-    final url = Uri.parse('http://localhost:3000/login');
+  final url = Uri.parse('http://localhost:3000/login');
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nombre_usuario': usuarioController.text,
-          'password': passwordController.text,
-        }),
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'nombre_usuario': usuarioController.text,
+        'password': passwordController.text,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login exitoso')),
       );
 
-      final data = jsonDecode(response.body);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(
+            nombre: data['usuario']['nombre'],
+          ),
+        ),
+      );
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login exitoso')),
-        );
-
-        print(data);
-
-        // Aquí luego puedes navegar a otra pantalla
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Error')),
-        );
-      }
-    } catch (e) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error de conexión')),
+        SnackBar(content: Text(data['error'] ?? 'Error')),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Error de conexión')),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {

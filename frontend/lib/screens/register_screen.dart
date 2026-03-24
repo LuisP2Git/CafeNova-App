@@ -46,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SnackBar(content: Text(data['mensaje'])),
         );
 
-        Navigator.pop(context); // vuelve al login
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['error'] ?? 'Error')),
