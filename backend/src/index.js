@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const app = express();
 app.use(cors());
@@ -23,12 +24,28 @@ db.connect(err => {
     console.log('Conectado a la base de datos MySQL');
 });
 
-app.get('/empleados', (req, res) => {
-    db.query('SELECT * FROM empleado', (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
-    });
-});
+function verificarToken(req, res, next) {
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: 'Token requerido' });
+    }
+
+    db.query(
+        'SELECT * FROM usuarios WHERE token = ?',
+        [token],
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (result.length === 0) {
+                return res.status(401).json({ error: 'Token inválido' });
+            }
+
+            req.usuario = result[0];
+            next();
+        }
+    );
+}
 
 app.post('/registro', async (req, res) => {
     const { nombre_usuario, correo, password, rol, id_empleado } = req.body;
@@ -78,11 +95,7 @@ app.post('/login', async (req, res) => {
                 return res.status(401).json({ error: 'Datos incorrectos' });
             }
 
-            if (user.token) {
-                return res.status(403).json({ error: 'Sesión ya activa en otro dispositivo' });
-            }
-
-            const token = Math.random().toString(36).substring(2);
+            const token = crypto.randomBytes(32).toString('hex');
             db.query(
                 'UPDATE usuarios SET token = ? WHERE id_usuario = ?',
                 [token, user.id_usuario],
@@ -107,7 +120,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/logout', (req, res) => {
-    const { token } = req.body;
+    const token = req.headers['authorization']?.split(' ')[1];
 
     if (!token) {
         return res.status(400).json({ error: 'Token requerido' });
@@ -118,17 +131,21 @@ app.post('/logout', (req, res) => {
         [token],
         (err, result) => {
             if (err) return res.status(500).json({ error: err.message });
-
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ error: 'Token no válido' });
-            }
-
+            
             res.json({ mensaje: 'Sesión cerrada correctamente' });
         }
     );
 });
 
-app.post('/fincas', (req, res) => {
+app.get('/empleados', verificarToken, (req, res) => {
+    db.query('SELECT * FROM empleado', (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+
+app.post('/fincas', verificarToken, (req, res) => {
     const { nombre_finca, ubicacion, tamano_hectareas, propietario } = req.body;
 
     db.query(
@@ -141,14 +158,16 @@ app.post('/fincas', (req, res) => {
     );
 });
 
-app.get('/fincas', (req, res) => {
+
+app.get('/fincas', verificarToken, (req, res) => {
     db.query('SELECT * FROM finca', (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
     });
 });
 
-app.put('/fincas/:id', (req, res) => {
+
+app.put('/fincas/:id', verificarToken, (req, res) => {
     const { id } = req.params;
     const { nombre_finca, ubicacion, tamano_hectareas, propietario } = req.body;
 
@@ -162,7 +181,8 @@ app.put('/fincas/:id', (req, res) => {
     );
 });
 
-app.delete('/fincas/:id', (req, res) => {
+
+app.delete('/fincas/:id', verificarToken, (req, res) => {
     const { id } = req.params;
 
     db.query('DELETE FROM finca WHERE id_finca = ?', [id], (err) => {
@@ -171,7 +191,8 @@ app.delete('/fincas/:id', (req, res) => {
     });
 });
 
-app.post('/lotes', (req, res) => {
+
+app.post('/lotes', verificarToken, (req, res) => {
     const { id_finca, nombre_lote, area, tipo_suelo } = req.body;
 
     db.query(
@@ -184,7 +205,8 @@ app.post('/lotes', (req, res) => {
     );
 });
 
-app.get('/lotes', (req, res) => {
+
+app.get('/lotes', verificarToken, (req, res) => {
     const sql = `
         SELECT l.*, f.nombre_finca 
         FROM lote l 
@@ -197,7 +219,8 @@ app.get('/lotes', (req, res) => {
     });
 });
 
-app.put('/lotes/:id', (req, res) => {
+
+app.put('/lotes/:id', verificarToken, (req, res) => {
     const { id } = req.params;
     const { nombre_lote, area, tipo_suelo } = req.body;
 
@@ -211,7 +234,8 @@ app.put('/lotes/:id', (req, res) => {
     );
 });
 
-app.delete('/lotes/:id', (req, res) => {
+
+app.delete('/lotes/:id', verificarToken, (req, res) => {
     const { id } = req.params;
 
     db.query('DELETE FROM lote WHERE id_lote = ?', [id], (err) => {
@@ -219,6 +243,7 @@ app.delete('/lotes/:id', (req, res) => {
         res.json({ mensaje: 'Lote eliminado' });
     });
 });
+
 
 const PORT = process.env.PORT || 3000;
 
