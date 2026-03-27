@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:frontend/screens/finca_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
+import 'package:frontend/utils/mensajes.dart';
 
 class HomeScreen extends StatefulWidget {
   final String nombre;
@@ -30,21 +31,24 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     obtenerLotes();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Mensajes.mostrar(context, 'Bienvenido ${widget.nombre}');
+    });
   }
 
   Future<void> obtenerLotes() async {
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:3000/lotes'),
-      );
+      final response = await http.get(Uri.parse('http://localhost:3000/lotes'));
 
       if (response.statusCode == 200) {
         setState(() {
           lotes = jsonDecode(response.body);
         });
+      } else {
+        Mensajes.mostrar(context, 'Error al cargar lotes', esError: true);
       }
     } catch (e) {
-      print("Error cargando lotes");
+      Mensajes.mostrar(context, 'Error de conexión', esError: true);
     }
   }
 
@@ -207,12 +211,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        ...lotes.map((lote) {
-                          return loteItem(
-                            lote['nombre_lote'] ?? '',
-                            lote['nombre_finca'] ?? '',
-                          );
-                        }),
+                        lotes.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(10),
+                                child: Text("No hay lotes disponibles"),
+                              )
+                            : Column(
+                                children: lotes.map((lote) {
+                                  return loteItem(
+                                    lote['nombre_lote'] ?? '',
+                                    lote['nombre_finca'] ?? '',
+                                  );
+                                }).toList(),
+                              ),
                       ],
                     ),
                   ),

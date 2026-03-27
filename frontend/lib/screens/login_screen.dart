@@ -3,6 +3,7 @@ import 'package:frontend/screens/register_screen.dart';
 import 'package:frontend/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/utils/mensajes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +21,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final url = Uri.parse('http://localhost:3000/login');
 
     try {
+      if (usuarioController.text.isEmpty || passwordController.text.isEmpty) {
+        Mensajes.mostrar(context, 'Completa todos los campos', esError: true);
+        return;
+      }
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -32,9 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login exitoso')),
-        );
+        Mensajes.mostrar(context, 'Login exitoso');
 
         Navigator.push(
           context,
@@ -46,16 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         );
-
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Error')),
-        );
+        Mensajes.mostrar(context, data['error'] ?? 'Error', esError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error de conexión')),
-      );
+      Mensajes.mostrar(context, 'Error de conexión', esError: true);
     }
   }
 

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/screens/login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String nombre;
   final String correo;
   final String token;
@@ -15,6 +15,13 @@ class ProfileScreen extends StatelessWidget {
     required this.token,
   });
 
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _selectedIndex = 3;
+
   Future<void> logout(BuildContext context) async {
     final url = Uri.parse('http://localhost:3000/logout');
 
@@ -22,7 +29,7 @@ class ProfileScreen extends StatelessWidget {
       await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'token': token}),
+        body: jsonEncode({'token': widget.token}),
       );
     } catch (e) {}
 
@@ -32,6 +39,14 @@ class ProfileScreen extends StatelessWidget {
       (route) => false,
     );
   }
+
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pop(context);
+    }
+  }
+
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +73,10 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const Icon(Icons.person, color: Colors.white),
                   const SizedBox(width: 10),
-                  const Text("Perfil",
-                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                  const Text(
+                    "Perfil",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
                 ],
               ),
             ),
@@ -70,7 +87,7 @@ class ProfileScreen extends StatelessWidget {
           CircleAvatar(
             radius: 50,
             child: Text(
-              nombre.isNotEmpty ? nombre[0] : '',
+              widget.nombre.isNotEmpty ? widget.nombre[0] : '',
               style: const TextStyle(fontSize: 40),
             ),
           ),
@@ -78,11 +95,11 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           Text(
-            nombre,
+            widget.nombre,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
 
-          Text(correo.isNotEmpty ? correo : 'Sin correo'),
+          Text(widget.correo.isNotEmpty ? widget.correo : 'Sin correo'),
 
           const SizedBox(height: 20),
 
@@ -91,12 +108,11 @@ class ProfileScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-
-                  cardItem(Icons.email, correo, null),
+                  cardItem(Icons.email, widget.correo, null),
 
                   const SizedBox(height: 10),
 
-                  cardItem(Icons.home, "Ubicación: ", null),
+                  cardItem(Icons.home, "Ubicación:", null),
 
                   const SizedBox(height: 10),
 
@@ -109,11 +125,17 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   GestureDetector(
+                    onTapDown: (_) => setState(() => _pressed = true),
+                    onTapUp: (_) => setState(() => _pressed = false),
+                    onTapCancel: () => setState(() => _pressed = false),
                     onTap: () => logout(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 15,
+                        horizontal: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: _pressed ? Colors.red.shade50 : Colors.white,
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: Row(
@@ -128,22 +150,25 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
 
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         selectedItemColor: const Color(0xFF6B7F66),
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),
           BottomNavigationBarItem(icon: Icon(Icons.eco), label: "Lotes"),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Reportes"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: "Reportes",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
         ],
       ),
@@ -163,7 +188,7 @@ class ProfileScreen extends StatelessWidget {
               color: Colors.grey.shade200,
               blurRadius: 5,
               offset: const Offset(2, 2),
-            )
+            ),
           ],
         ),
         child: Row(

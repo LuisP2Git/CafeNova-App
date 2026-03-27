@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/utils/mensajes.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -10,23 +11,23 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   final usuarioController = TextEditingController();
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  bool esCorreoValido(String correo) {
+    final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return regex.hasMatch(correo);
+  }
+
   Future<void> registrar() async {
-    if (correoController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El correo es obligatorio')),
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Las contraseñas no coinciden')),
-      );
+      Mensajes.mostrar(context, 'Las contraseñas no coinciden', esError: true);
       return;
     }
 
@@ -41,27 +42,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'correo': correoController.text,
           'password': passwordController.text,
           'rol': 'empleado',
-          'id_empleado': null
+          'id_empleado': null,
         }),
       );
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['mensaje'])),
-        );
+        Mensajes.mostrar(context, data['mensaje']);
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Error')),
-        );
+        Mensajes.mostrar(context, data['error'] ?? 'Error', esError: true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error de conexión')),
-      );
+      Mensajes.mostrar(context, 'Error de conexión', esError: true);
     }
+  }
+
+  @override
+  void dispose() {
+    usuarioController.dispose();
+    correoController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -77,54 +81,114 @@ class _RegisterScreenState extends State<RegisterScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const Icon(Icons.eco, size: 125, color: Color.fromARGB(255, 126, 185, 86)),
-                const SizedBox(height: 10),
-                const Text(
-                  "Cafenova",
-                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                const Text("Registro de usuario", style: TextStyle(fontSize: 27)),
-                const SizedBox(height: 30),
-                TextField(
-                  controller: usuarioController,
-                  decoration: const InputDecoration(hintText: "Nombre de usuario"),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: correoController,
-                  decoration: const InputDecoration(hintText: "Correo electrónico"),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(hintText: "Contraseña"),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(hintText: "Confirmar contraseña"),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: registrar,
-                    child: const Text("Crear cuenta"),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.eco,
+                    size: 125,
+                    color: Color.fromARGB(255, 126, 185, 86),
                   ),
-                ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Ya tienes una cuenta - Inicia sesión"),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Cafenova",
+                    style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Registro de usuario",
+                    style: TextStyle(fontSize: 27),
+                  ),
+                  const SizedBox(height: 30),
+
+                  TextFormField(
+                    controller: usuarioController,
+                    decoration: const InputDecoration(
+                      hintText: "Nombre de usuario",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'El usuario es obligatorio';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  TextFormField(
+                    controller: correoController,
+                    decoration: const InputDecoration(
+                      hintText: "Correo electrónico",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'El correo es obligatorio';
+                      }
+                      if (!esCorreoValido(value)) {
+                        return 'Correo inválido';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(hintText: "Contraseña"),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'La contraseña es obligatoria';
+                      }
+                      if (value.length < 6) {
+                        return 'Mínimo 6 caracteres';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  TextFormField(
+                    controller: confirmPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      hintText: "Confirmar contraseña",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Confirma la contraseña';
+                      }
+                      if (value != passwordController.text) {
+                        return 'No coinciden';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: registrar,
+                      child: const Text("Crear cuenta"),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Ya tienes una cuenta - Inicia sesión"),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
