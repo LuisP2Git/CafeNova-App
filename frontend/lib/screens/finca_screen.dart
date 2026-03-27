@@ -17,6 +17,7 @@ class _FincasScreenState extends State<FincasScreen> {
   final ubicacionController = TextEditingController();
   final tamanoController = TextEditingController();
   final propietarioController = TextEditingController();
+  
 
   int? idEditando;
 
