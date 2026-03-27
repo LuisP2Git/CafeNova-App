@@ -73,7 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> irALotes() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const LotesScreen()),
+      MaterialPageRoute(
+  builder: (_) => LotesScreen(
+    nombreUsuario: widget.nombre,
+  ),
+),
     );
 
     setState(() {
@@ -84,7 +88,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> irAFincas() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const FincasScreen()),
+      MaterialPageRoute(
+  builder: (_) => FincasScreen(
+    nombreUsuario: widget.nombre,
+  ),
+),
     );
 
     setState(() {
