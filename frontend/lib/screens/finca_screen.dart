@@ -13,8 +13,17 @@ class _FincasScreenState extends State<FincasScreen> {
 
   List fincas = [];
 
+  // API
+  List departamentos = [];
+  List municipios = [];
+
+  // CACHE 🚀
+  Map<String, List> cacheMunicipios = {};
+
+  String? departamentoSeleccionado;
+  String? municipioSeleccionado;
+
   final nombreController = TextEditingController();
-  final ubicacionController = TextEditingController();
   final tamanoController = TextEditingController();
   final propietarioController = TextEditingController();
   
@@ -25,7 +34,46 @@ class _FincasScreenState extends State<FincasScreen> {
   void initState() {
     super.initState();
     obtenerFincas();
+    obtenerDepartamentos();
   }
+
+  // ================= API =================
+
+  Future<void> obtenerDepartamentos() async {
+    final response = await http.get(
+      Uri.parse('https://api-colombia.com/api/v1/Department'),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        departamentos = jsonDecode(response.body);
+      });
+    }
+  }
+
+  Future<void> obtenerMunicipios(String idDepartamento) async {
+
+    // ✅ CACHE
+    if (cacheMunicipios.containsKey(idDepartamento)) {
+      municipios = cacheMunicipios[idDepartamento]!;
+      return;
+    }
+
+    final response = await http.get(
+      Uri.parse(
+          'https://api-colombia.com/api/v1/Department/$idDepartamento/cities'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      cacheMunicipios[idDepartamento] = data;
+
+      municipios = data;
+    }
+  }
+
+  // ================= FINCAS =================
 
   Future<void> obtenerFincas() async {
     final response = await http.get(
@@ -40,6 +88,33 @@ class _FincasScreenState extends State<FincasScreen> {
   }
 
   Future<void> guardarFinca() async {
+
+    if (nombreController.text.trim().isEmpty) {
+      mostrarError("El nombre es obligatorio");
+      return;
+    }
+
+    if (departamentoSeleccionado == null || municipioSeleccionado == null) {
+      mostrarError("Debes seleccionar ubicación");
+      return;
+    }
+
+    final tamano = double.tryParse(tamanoController.text);
+
+    if (tamano == null || tamano <= 0) {
+      mostrarError("El tamaño debe ser un número positivo");
+      return;
+    }
+
+    if (propietarioController.text.trim().isEmpty) {
+      mostrarError("El propietario es obligatorio");
+      return;
+    }
+
+    final depNombre = departamentos.firstWhere(
+      (d) => d['id'].toString() == departamentoSeleccionado,
+    )['name'];
+
     final url = idEditando == null
         ? 'http://localhost:3000/fincas'
         : 'http://localhost:3000/fincas/$idEditando';
@@ -50,10 +125,10 @@ class _FincasScreenState extends State<FincasScreen> {
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'nombre_finca': nombreController.text,
-        'ubicacion': ubicacionController.text,
-        'tamano_hectareas': tamanoController.text,
-        'propietario': propietarioController.text,
+        'nombre_finca': nombreController.text.trim(),
+        'ubicacion': "$depNombre - $municipioSeleccionado",
+        'tamano_hectareas': tamano,
+        'propietario': propietarioController.text.trim(),
       }),
     );
 
@@ -73,50 +148,160 @@ class _FincasScreenState extends State<FincasScreen> {
 
   void limpiarCampos() {
     nombreController.clear();
-    ubicacionController.clear();
     tamanoController.clear();
     propietarioController.clear();
+
+    departamentoSeleccionado = null;
+    municipioSeleccionado = null;
+    municipios = [];
+
     idEditando = null;
   }
 
-  void mostrarFormulario({Map? finca}) {
+  void mostrarError(String mensaje) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Error"),
+        content: Text(mensaje),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          )
+        ],
+      ),
+    );
+  }
+
+  // ================= FORM =================
+
+  void mostrarFormulario({Map? finca}) async {
 
     if (finca != null) {
       idEditando = finca['id_finca'];
       nombreController.text = finca['nombre_finca'];
-      ubicacionController.text = finca['ubicacion'];
       tamanoController.text = finca['tamano_hectareas'].toString();
       propietarioController.text = finca['propietario'];
+
+      final ubicacion = finca['ubicacion'] ?? "";
+
+      if (ubicacion.contains(" - ")) {
+        final partes = ubicacion.split(" - ");
+        final nombreDep = partes[0];
+        final nombreMun = partes[1];
+
+        final dep = departamentos.firstWhere(
+          (d) => d['name'] == nombreDep,
+          orElse: () => {},
+        );
+
+        if (dep.isNotEmpty) {
+          departamentoSeleccionado = dep['id'].toString();
+
+          await obtenerMunicipios(departamentoSeleccionado!);
+
+          municipioSeleccionado = nombreMun;
+        }
+      }
     }
 
     showDialog(
       context: context,
       builder: (_) {
-        return AlertDialog(
-          title: Text(finca == null ? "Nueva Finca" : "Editar Finca"),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(controller: nombreController, decoration: const InputDecoration(labelText: "Nombre")),
-                TextField(controller: ubicacionController, decoration: const InputDecoration(labelText: "Ubicación")),
-                TextField(controller: tamanoController, decoration: const InputDecoration(labelText: "Tamaño (ha)")),
-                TextField(controller: propietarioController, decoration: const InputDecoration(labelText: "Propietario")),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+
+            return AlertDialog(
+              title: Text(finca == null ? "Nueva Finca" : "Editar Finca"),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: [
+
+                    TextField(
+                      controller: nombreController,
+                      decoration: const InputDecoration(labelText: "Nombre"),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      hint: const Text("Departamento"),
+                      value: departamentoSeleccionado,
+                      items: departamentos.map<DropdownMenuItem<String>>((dep) {
+                        return DropdownMenuItem(
+                          value: dep['id'].toString(),
+                          child: Text(dep['name']),
+                        );
+                      }).toList(),
+                      onChanged: (value) async {
+
+                        setStateDialog(() {
+                          departamentoSeleccionado = value;
+                          municipioSeleccionado = null;
+                          municipios = [];
+                        });
+
+                        await obtenerMunicipios(value!);
+
+                        setStateDialog(() {});
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    DropdownButtonFormField<String>(
+                      isExpanded: true,
+                      hint: const Text("Municipio"),
+                      value: municipioSeleccionado,
+                      items: municipios.map<DropdownMenuItem<String>>((mun) {
+                        return DropdownMenuItem(
+                          value: mun['name'],
+                          child: Text(mun['name']),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          municipioSeleccionado = value;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    TextField(
+                      controller: tamanoController,
+                      keyboardType: TextInputType.number,
+                      decoration:
+                          const InputDecoration(labelText: "Tamaño (ha)"),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    TextField(
+                      controller: propietarioController,
+                      decoration:
+                          const InputDecoration(labelText: "Propietario"),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    limpiarCampos();
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Cancelar"),
+                ),
+                ElevatedButton(
+                  onPressed: guardarFinca,
+                  child: const Text("Guardar"),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                limpiarCampos();
-                Navigator.pop(context);
-              },
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: guardarFinca,
-              child: const Text("Guardar"),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -153,50 +338,51 @@ class _FincasScreenState extends State<FincasScreen> {
       body: Column(
         children: [
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-            decoration: const BoxDecoration(
-              color: Color(0xFF6B7F66),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(25),
-                bottomRight: Radius.circular(25),
-              ),
+  width: double.infinity,
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+  decoration: const BoxDecoration(
+    color: Color(0xFF6B7F66),
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(25),
+      bottomRight: Radius.circular(25),
+    ),
+  ),
+  child: SafeArea(
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: SafeArea(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const Icon(Icons.eco, color: Colors.white),
-                      const SizedBox(width: 10),
-                      const Text("Cafe Nova",
-                          style: TextStyle(color: Colors.white, fontSize: 18)),
-                    ],
-                  ),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text("Usuario", style: TextStyle(color: Colors.white)),
-                      Row(
-                        children: [
-                          Icon(Icons.circle,
-                              size: 10, color: Colors.greenAccent),
-                          SizedBox(width: 5),
-                          Text("Conectado",
-                              style: TextStyle(color: Colors.white)),
-                        ],
-                      )
-                    ],
-                  )
-                ],
-              ),
+            const Icon(Icons.eco, color: Colors.white),
+            const SizedBox(width: 10),
+            const Text(
+              "Cafe Nova",
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
-          ),
+          ],
+        ),
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text("Usuario", style: TextStyle(color: Colors.white)),
+            Row(
+              children: [
+                Icon(Icons.circle, size: 10, color: Colors.greenAccent),
+                SizedBox(width: 5),
+                Text("Conectado", style: TextStyle(color: Colors.white)),
+              ],
+            )
+          ],
+        )
+      ],
+    ),
+  ),
+),
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -205,7 +391,8 @@ class _FincasScreenState extends State<FincasScreen> {
                 children: [
                   const Text(
                     "Fincas",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 15),
                   ...fincas.map((finca) => fincaCard(finca)),
@@ -215,6 +402,7 @@ class _FincasScreenState extends State<FincasScreen> {
           ),
         ],
       ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF6B7F66),
         onPressed: () => mostrarFormulario(),
@@ -232,13 +420,6 @@ class _FincasScreenState extends State<FincasScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 5,
-              offset: const Offset(2, 2),
-            )
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,26 +450,7 @@ class _FincasScreenState extends State<FincasScreen> {
 
             const SizedBox(height: 10),
 
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F1ED),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.person,
-                      size: 16, color: Color(0xFF6B7F66)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Propietario: ${finca['propietario'] ?? '-'}",
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            Text("Propietario: ${finca['propietario'] ?? '-'}"),
           ],
         ),
       ),

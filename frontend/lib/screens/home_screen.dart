@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/screens/finca_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
@@ -30,15 +32,31 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    verificarSesion();
     obtenerLotes();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Mensajes.mostrar(context, 'Bienvenido ${widget.nombre}');
     });
   }
 
+  Future<void> verificarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
   Future<void> obtenerLotes() async {
     try {
-      final response = await http.get(Uri.parse('http://localhost:3000/lotes'));
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/lotes'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
 
       if (response.statusCode == 200) {
         setState(() {

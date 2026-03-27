@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/screens/register_screen.dart';
 import 'package:frontend/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
@@ -37,14 +38,18 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        Mensajes.mostrar(context, 'Login exitoso');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', data['token']);
+        await prefs.setString('nombre', data['usuario']['nombre']);
+        await prefs.setString('correo', data['usuario']['correo']);
 
-        Navigator.push(
+        Mensajes.mostrar(context, 'Login exitoso');
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => HomeScreen(
               nombre: data['usuario']['nombre'],
-              correo: data['usuario']['nombre'],
+              correo: data['usuario']['correo'],
               token: data['token'],
             ),
           ),
