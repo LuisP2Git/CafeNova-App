@@ -3,13 +3,17 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class LotesScreen extends StatefulWidget {
-  const LotesScreen({super.key});
+final String nombreUsuario;
+
+  const LotesScreen({super.key, required this.nombreUsuario});
 
   @override
   State<LotesScreen> createState() => _LotesScreenState();
 }
 
 class _LotesScreenState extends State<LotesScreen> {
+
+  late String nombreUsuario;
 
   List lotes = [];
   List fincas = [];
@@ -28,6 +32,7 @@ class _LotesScreenState extends State<LotesScreen> {
     super.initState();
     obtenerLotes();
     obtenerFincas();
+    nombreUsuario = widget.nombreUsuario;
   }
 
   Future<void> obtenerLotes() async {
@@ -218,10 +223,11 @@ class _LotesScreenState extends State<LotesScreen> {
                           style: TextStyle(color: Colors.white, fontSize: 18)),
                     ],
                   ),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text("Usuario", style: TextStyle(color: Colors.white)),
+                      Text(nombreUsuario,
+                      style: TextStyle(color: Colors.white)),
                       Row(
                         children: [
                           Icon(Icons.circle,

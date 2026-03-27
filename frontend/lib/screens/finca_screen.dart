@@ -3,7 +3,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class FincasScreen extends StatefulWidget {
-  const FincasScreen({super.key});
+  final String nombreUsuario;
+
+  const FincasScreen({super.key, required this.nombreUsuario});
+  
 
   @override
   State<FincasScreen> createState() => _FincasScreenState();
@@ -11,11 +14,14 @@ class FincasScreen extends StatefulWidget {
 
 class _FincasScreenState extends State<FincasScreen> {
 
+  late String nombreUsuario;
+
   List fincas = [];
 
   // API
   List departamentos = [];
   List municipios = [];
+  
 
   // CACHE 🚀
   Map<String, List> cacheMunicipios = {};
@@ -26,6 +32,7 @@ class _FincasScreenState extends State<FincasScreen> {
   final nombreController = TextEditingController();
   final tamanoController = TextEditingController();
   final propietarioController = TextEditingController();
+  
 
   int? idEditando;
 
@@ -34,6 +41,7 @@ class _FincasScreenState extends State<FincasScreen> {
     super.initState();
     obtenerFincas();
     obtenerDepartamentos();
+    nombreUsuario = widget.nombreUsuario;
   }
 
   // ================= API =================
@@ -101,7 +109,7 @@ class _FincasScreenState extends State<FincasScreen> {
     final tamano = double.tryParse(tamanoController.text);
 
     if (tamano == null || tamano <= 0) {
-      mostrarError("El tamaño debe ser un número positivo");
+      mostrarError("El tamaño debe ser un numero valido");
       return;
     }
 
@@ -364,10 +372,12 @@ class _FincasScreenState extends State<FincasScreen> {
             ),
           ],
         ),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text("Usuario", style: TextStyle(color: Colors.white)),
+            Text(nombreUsuario,
+  style: const TextStyle(color: Colors.white),
+),
             Row(
               children: [
                 Icon(Icons.circle, size: 10, color: Colors.greenAccent),
