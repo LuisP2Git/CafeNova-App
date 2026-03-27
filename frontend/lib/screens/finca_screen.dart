@@ -207,7 +207,7 @@ class _FincasScreenState extends State<FincasScreen> {
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 15),
-                  ...fincas.map((finca) => fincaCard(finca)).toList(),
+                  ...fincas.map((finca) => fincaCard(finca)),
                 ],
               ),
             ),

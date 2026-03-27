@@ -21,7 +21,7 @@ class _LotesScreenState extends State<LotesScreen> {
   int? fincaSeleccionada;
   int? idEditando;
 
-  int _selectedIndex = 1;
+  final int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -112,7 +112,7 @@ class _LotesScreenState extends State<LotesScreen> {
             child: Column(
               children: [
                 DropdownButtonFormField<int>(
-                  value: fincaSeleccionada,
+                  initialValue: fincaSeleccionada,
                   hint: const Text("Seleccionar Finca"),
                   items: fincas.map<DropdownMenuItem<int>>((finca) {
                     return DropdownMenuItem<int>(
@@ -248,7 +248,7 @@ class _LotesScreenState extends State<LotesScreen> {
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 15),
-                  ...lotes.map((lote) => loteCard(lote)).toList(),
+                  ...lotes.map((lote) => loteCard(lote)),
                 ],
               ),
             ),

@@ -17,45 +17,47 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   Future<void> login() async {
-  final url = Uri.parse('http://localhost:3000/login');
+    final url = Uri.parse('http://localhost:3000/login');
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'nombre_usuario': usuarioController.text,
-        'password': passwordController.text,
-      }),
-    );
-
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login exitoso')),
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nombre_usuario': usuarioController.text,
+          'password': passwordController.text,
+        }),
       );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            nombre: data['usuario']['nombre'],
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login exitoso')),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomeScreen(
+              nombre: data['usuario']['nombre'],
+              correo: data['usuario']['nombre'],
+              token: data['token'],
+            ),
           ),
-        ),
-      );
+        );
 
-    } else {
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Error')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['error'] ?? 'Error')),
+        const SnackBar(content: Text('Error de conexión')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error de conexión')),
-    );
   }
-}
 
   @override
   Widget build(BuildContext context) {

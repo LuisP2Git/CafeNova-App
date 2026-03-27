@@ -3,11 +3,19 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/screens/finca_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
+import 'package:frontend/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String nombre;
+  final String correo;
+  final String token;
 
-  const HomeScreen({super.key, required this.nombre});
+  const HomeScreen({
+    super.key,
+    required this.nombre,
+    required this.correo,
+    required this.token,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -63,6 +71,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ProfileScreen(
+            nombre: widget.nombre,
+            correo: widget.correo,
+            token: widget.token,
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -190,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             lote['nombre_lote'] ?? '',
                             lote['nombre_finca'] ?? '',
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),
@@ -243,8 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.location_on,
-                color: Color(0xFF6B7F66), size: 18),
+            const Icon(Icons.location_on, color: Color(0xFF6B7F66), size: 18),
             const SizedBox(width: 10),
             Expanded(child: Text("$nombre - $finca")),
             const Icon(Icons.arrow_forward_ios, size: 14),
