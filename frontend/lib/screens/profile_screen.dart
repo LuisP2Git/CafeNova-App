@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:frontend/screens/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String nombre;
@@ -25,13 +25,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> logout(BuildContext context) async {
     final url = Uri.parse('http://localhost:3000/logout');
 
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
     try {
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'token': widget.token}),
-      );
+      await http.post(url, headers: {'Authorization': 'Bearer $token'});
     } catch (e) {}
+    await prefs.clear();
 
     Navigator.pushAndRemoveUntil(
       context,
