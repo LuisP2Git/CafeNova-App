@@ -12,9 +12,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const AuthCheck(),
+      home: AuthCheck(),
     );
   }
 }
@@ -27,6 +27,7 @@ class AuthCheck extends StatefulWidget {
 }
 
 class _AuthCheckState extends State<AuthCheck> {
+
   @override
   void initState() {
     super.initState();
@@ -39,25 +40,34 @@ class _AuthCheckState extends State<AuthCheck> {
     final token = prefs.getString('token');
     final nombre = prefs.getString('nombre');
     final correo = prefs.getString('correo');
+    final rol = prefs.getString('rol');
 
-    if (token != null && nombre != null && correo != null) {
+    if (token != null && nombre != null && correo != null && rol != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              HomeScreen(nombre: nombre, correo: correo, token: token),
+          builder: (_) => HomeScreen(
+            nombre: nombre,
+            correo: correo,
+            token: token,
+            rol: rol,
+          ),
         ),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
   }
 }

@@ -20,7 +20,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _selectedIndex = 3;
+  final int _selectedIndex = 3;
 
   Future<void> logout(BuildContext context) async {
     final url = Uri.parse('http://localhost:3000/logout');

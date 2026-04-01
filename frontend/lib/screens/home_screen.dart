@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/employees_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,12 +13,14 @@ class HomeScreen extends StatefulWidget {
   final String nombre;
   final String correo;
   final String token;
+  final String rol;
 
   const HomeScreen({
     super.key,
     required this.nombre,
     required this.correo,
     required this.token,
+    required this.rol,
   });
 
   @override
@@ -35,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     verificarSesion();
     obtenerLotes();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Mensajes.mostrar(context, 'Bienvenido ${widget.nombre}');
+      Mensajes.mostrar(context, 'Bienvenido ${widget.nombre} (${widget.rol})');
     });
   }
 
@@ -74,10 +77,10 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-  builder: (_) => LotesScreen(
-    nombreUsuario: widget.nombre,
-  ),
-),
+        builder: (_) => LotesScreen(
+          nombreUsuario: widget.nombre,
+        ),
+      ),
     );
 
     setState(() {
@@ -86,13 +89,38 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> irAFincas() async {
+    if (widget.rol != 'admin') {
+      Mensajes.mostrar(context, "No tienes permisos", esError: true);
+      return;
+    }
+
     await Navigator.push(
       context,
       MaterialPageRoute(
-  builder: (_) => FincasScreen(
-    nombreUsuario: widget.nombre,
-  ),
-),
+        builder: (_) => FincasScreen(
+          nombreUsuario: widget.nombre, token: '',
+        ),
+      ),
+    );
+
+    setState(() {
+      _selectedIndex = 0;
+    });
+  }
+
+  Future<void> irAEmpleados() async {
+    if (widget.rol != 'admin') {
+      Mensajes.mostrar(context, "No tienes permisos", esError: true);
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EmpleadosScreen(
+          token: widget.token,
+        ),
+      ),
     );
 
     setState(() {
@@ -126,6 +154,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    Color rolColor = widget.rol == 'admin' ? Colors.green : Colors.blue;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
       bottomNavigationBar: BottomNavigationBar(
@@ -145,9 +176,9 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-            decoration: const BoxDecoration(
-              color: Color(0xFF6B7F66),
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: rolColor,
+              borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(25),
                 bottomRight: Radius.circular(25),
               ),
@@ -202,10 +233,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 1.2,
                     children: [
-                      dashboardCard("Fincas", Icons.park, irAFincas),
+                      if (widget.rol == 'admin')
+                        dashboardCard("Fincas", Icons.park, irAFincas),
+
                       dashboardCard("Lotes", Icons.eco, irALotes),
-                      dashboardCard("Empleados", Icons.people, () {}),
-                      dashboardCard("Inventario", Icons.inventory, () {}),
+
+                      if (widget.rol == 'admin')
+                        dashboardCard("Empleados", Icons.people, irAEmpleados),
+
+                      if (widget.rol == 'admin')
+                        dashboardCard("Inventario", Icons.inventory, () {}),
+
                       dashboardCard("Reportes", Icons.bar_chart, () {}),
                       dashboardCard("IA", Icons.smart_toy, () {}),
                     ],

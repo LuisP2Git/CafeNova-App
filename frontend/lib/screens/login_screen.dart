@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'nombre_usuario': usuarioController.text,
+          'identificador': usuarioController.text,
           'password': passwordController.text,
         }),
       );
@@ -42,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('token', data['token']);
         await prefs.setString('nombre', data['usuario']['nombre']);
         await prefs.setString('correo', data['usuario']['correo']);
+        await prefs.setString('rol', data['usuario']['rol']);
 
         Mensajes.mostrar(context, 'Login exitoso');
         Navigator.pushReplacement(
@@ -51,8 +52,15 @@ class _LoginScreenState extends State<LoginScreen> {
               nombre: data['usuario']['nombre'],
               correo: data['usuario']['correo'],
               token: data['token'],
+              rol: data['usuario']['rol'],
             ),
           ),
+        );
+      } else if (response.statusCode == 403) {
+        Mensajes.mostrar(
+          context,
+          'Tu cuenta está pendiente de aprobación',
+          esError: true,
         );
       } else {
         Mensajes.mostrar(context, data['error'] ?? 'Error', esError: true);

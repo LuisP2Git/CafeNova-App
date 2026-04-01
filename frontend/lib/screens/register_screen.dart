@@ -17,6 +17,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  int idFinca = 1;
 
   bool esCorreoValido(String correo) {
     final regex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
@@ -38,24 +39,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'nombre_usuario': usuarioController.text,
-          'correo': correoController.text,
+          'nombre_usuario': usuarioController.text.trim(),
+          'correo': correoController.text.trim(),
           'password': passwordController.text,
-          'rol': 'empleado',
-          'id_empleado': null,
+          'id_finca': idFinca,
         }),
       );
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 201) {
-        Mensajes.mostrar(context, data['mensaje']);
+      if (response.statusCode == 200) {
+        Mensajes.mostrar(
+          context,
+          data['mensaje'] ?? 'Registro exitoso. Espera aprobación',
+        );
         Navigator.pop(context);
       } else {
-        Mensajes.mostrar(context, data['error'] ?? 'Error', esError: true);
+        Mensajes.mostrar(
+          context,
+          data['error'] ?? 'Error al registrar',
+          esError: true,
+        );
       }
     } catch (e) {
-      Mensajes.mostrar(context, 'Error de conexión', esError: true);
+      Mensajes.mostrar(context, 'Error de conexión con el servidor', esError: true);
     }
   }
 
@@ -138,7 +145,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(hintText: "Contraseña"),
+                    decoration: const InputDecoration(
+                      hintText: "Contraseña",
+                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'La contraseña es obligatoria';
@@ -185,7 +194,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onTap: () {
                       Navigator.pop(context);
                     },
-                    child: const Text("Ya tienes una cuenta - Inicia sesión"),
+                    child: const Text(
+                      "Ya tienes una cuenta - Inicia sesión",
+                    ),
                   ),
                 ],
               ),
