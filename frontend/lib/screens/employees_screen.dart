@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'usuarios_pendientes_screen.dart';
+import 'package:frontend/utils/mensajes.dart';
 
 class EmpleadosScreen extends StatefulWidget {
   final String token;
@@ -23,9 +25,15 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   final cargoController = TextEditingController();
   final telefonoController = TextEditingController();
   final fechaController = TextEditingController();
+  DateTime? fechaSeleccionada;
 
   int? fincaSeleccionada;
   int? idEditando;
+
+  String formatearFecha(String fecha) {
+    final f = DateTime.parse(fecha);
+    return "${f.day}/${f.month}/${f.year}";
+  }
 
   @override
   void initState() {
@@ -103,7 +111,9 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
       body: jsonEncode({
         "cargo": cargoController.text,
         "telefono": telefonoController.text,
-        "fecha_contratacion": fechaController.text,
+        "fecha_contratacion": fechaSeleccionada != null
+            ? "${fechaSeleccionada!.year}-${fechaSeleccionada!.month.toString().padLeft(2, '0')}-${fechaSeleccionada!.day.toString().padLeft(2, '0')}"
+            : null,
         "id_finca": fincaSeleccionada
       }),
     );
@@ -126,8 +136,28 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
       idEditando = emp['id_empleado'];
       cargoController.text = emp['cargo'] ?? '';
       telefonoController.text = emp['telefono'] ?? '';
-      fechaController.text =
-          emp['fecha_contratacion']?.toString().split(' ')[0] ?? '';
+          if (telefonoController.text.length != 10) {
+            Mensajes.mostrar(
+              context,
+              "El teléfono debe tener exactamente 10 dígitos",
+              esError: true,
+            );
+            return;
+          }
+          if (emp['fecha_contratacion'] != null) {
+            try {
+              final fecha = DateTime.parse(emp['fecha_contratacion'].toString());
+              fechaSeleccionada = fecha;
+              fechaController.text =
+                  "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
+            } catch (e) {
+              fechaController.text = "";
+              fechaSeleccionada = null;
+            }
+          } else {
+            fechaController.text = "";
+            fechaSeleccionada = null;
+          }
       fincaSeleccionada = emp['id_finca'];
     }
 
@@ -146,17 +176,42 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: telefonoController,
-                  decoration: const InputDecoration(labelText: "Teléfono"),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: "Teléfono",
+                  ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: fechaController,
-                  decoration:
-                      const InputDecoration(labelText: "Fecha contratación"),
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: "Fecha contratación",
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  onTap: () async {
+                    DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: fechaSeleccionada ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        fechaSeleccionada = picked;
+                        fechaController.text =
+                            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
-                  value: fincaSeleccionada,
+                  initialValue: fincaSeleccionada,
                   hint: const Text("Seleccionar finca"),
                   items: fincas.map<DropdownMenuItem<int>>((finca) {
                     return DropdownMenuItem(
@@ -316,8 +371,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                                   const SizedBox(height: 10),
                                   Text("Cargo: ${emp['cargo'] ?? '-'}"),
                                   Text("Teléfono: ${emp['telefono'] ?? '-'}"),
-                                  Text(
-                                      "Fecha: ${emp['fecha_contratacion'] ?? '-'}"),
+                                  Text("Fecha: ${emp['fecha_contratacion'] != null ? formatearFecha(emp['fecha_contratacion']): '-'}",),
                                   Text(
                                     emp['nombre_finca'] != null
                                         ? "Finca: ${emp['nombre_finca']}"

@@ -98,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => FincasScreen(
-          nombreUsuario: widget.nombre, token: '',
+          nombreUsuario: widget.nombre, token: widget.token,
         ),
       ),
     );

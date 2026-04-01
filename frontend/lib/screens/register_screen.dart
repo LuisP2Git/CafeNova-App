@@ -17,6 +17,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final cargoController = TextEditingController();
+  final telefonoController = TextEditingController();
+  final fechaController = TextEditingController();
+
+  DateTime? fechaSeleccionada;
+
   int idFinca = 1;
 
   bool esCorreoValido(String correo) {
@@ -32,6 +38,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (telefonoController.text.length != 10) {
+      Mensajes.mostrar(
+        context,
+        "El teléfono debe tener exactamente 10 dígitos",
+        esError: true,
+      );
+      return;
+    }
+
+    if (fechaSeleccionada == null) {
+      Mensajes.mostrar(
+        context,
+        "Debes seleccionar una fecha",
+        esError: true,
+      );
+      return;
+    }
+
     final url = Uri.parse('http://localhost:3000/registro');
 
     try {
@@ -42,6 +66,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'nombre_usuario': usuarioController.text.trim(),
           'correo': correoController.text.trim(),
           'password': passwordController.text,
+          'cargo': cargoController.text.trim(),
+          'telefono': telefonoController.text.trim(),
+          'fecha_contratacion': fechaController.text,
           'id_finca': idFinca,
         }),
       );
@@ -51,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (response.statusCode == 200) {
         Mensajes.mostrar(
           context,
-          data['mensaje'] ?? 'Registro exitoso. Espera aprobación',
+          data['mensaje'] ?? 'Registro exitoso',
         );
         Navigator.pop(context);
       } else {
@@ -62,7 +89,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     } catch (e) {
-      Mensajes.mostrar(context, 'Error de conexión con el servidor', esError: true);
+      Mensajes.mostrar(
+        context,
+        'Error de conexión con el servidor',
+        esError: true,
+      );
     }
   }
 
@@ -72,6 +103,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     correoController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    cargoController.dispose();
+    telefonoController.dispose();
+    fechaController.dispose();
     super.dispose();
   }
 
@@ -108,7 +142,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: TextStyle(fontSize: 27),
                   ),
                   const SizedBox(height: 30),
-
                   TextFormField(
                     controller: usuarioController,
                     decoration: const InputDecoration(
@@ -123,7 +156,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   const SizedBox(height: 15),
-
                   TextFormField(
                     controller: correoController,
                     decoration: const InputDecoration(
@@ -141,7 +173,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   const SizedBox(height: 15),
-
                   TextFormField(
                     controller: passwordController,
                     obscureText: true,
@@ -160,7 +191,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   const SizedBox(height: 15),
-
                   TextFormField(
                     controller: confirmPasswordController,
                     obscureText: true,
@@ -178,8 +208,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: cargoController,
+                    decoration: const InputDecoration(
+                      hintText: "Cargo",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'El Cargo es obligatorio';
+                      }
+                      return null;
+                    },
+                  ),
 
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: telefonoController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 10,
+                    decoration: const InputDecoration(
+                      hintText: "Teléfono",
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'El teléfono es obligatorio';
+                      }
+                      if (value.length != 10) {
+                        return 'Debe tener 10 dígitos';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: fechaController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      hintText: "Fecha de contratación",
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          fechaSeleccionada = picked;
+                          fechaController.text =
+                              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                        });
+                      }
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'La Fecha de Contratación es obligatoria';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -189,7 +282,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
 
                   const SizedBox(height: 20),
-
                   GestureDetector(
                     onTap: () {
                       Navigator.pop(context);

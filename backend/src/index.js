@@ -186,13 +186,16 @@ app.get('/empleados', verificarToken, soloAdmin, (req, res) => {
 
 app.put('/empleados/:id', verificarToken, soloAdmin, (req, res) => {
     const { id } = req.params;
-    const { cargo, telefono, fecha_contratacion, id_finca } = req.body;
+    let { cargo, telefono, fecha_contratacion, id_finca } = req.body;
+    if (!fecha_contratacion || fecha_contratacion === '') {
+        fecha_contratacion = null;
+    }
     db.query(
-    `UPDATE empleado 
-        SET cargo = ?, telefono = ?, fecha_contratacion = ?, id_finca = ?
-        WHERE id_empleado = ?`,
-    [cargo, telefono, fecha_contratacion, id_finca, id],
-    (err, result) => {
+    `UPDATE empleado
+            SET cargo = ?, telefono = ?, fecha_contratacion = ?, id_finca = ?
+            WHERE id_empleado = ?`,
+        [cargo, telefono, fecha_contratacion, id_finca, id],
+        (err, result) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ mensaje: 'Empleado actualizado' });
         }

@@ -1,1 +1,1 @@
-SELECT id_usuario, nombre_usuario, token FROM usuarios;
+SELECT id_usuario, nombre_usuario, token, rol, estado FROM usuarios;
