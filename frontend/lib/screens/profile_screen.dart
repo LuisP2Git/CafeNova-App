@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/screens/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/screens/lotes_screen.dart';
+import 'package:frontend/screens/reportes_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String nombre;
   final String correo;
-  final String token;
 
   const ProfileScreen({
     super.key,
     required this.nombre,
     required this.correo,
-    required this.token,
   });
 
   @override
@@ -41,10 +41,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pop(context);
-    }
+  if (index == 0) {
+    Navigator.pop(context); // Inicio
   }
+
+  if (index == 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LotesScreen(nombreUsuario: widget.nombre),
+      ),
+    );
+  }
+
+  if (index == 2) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReportesScreen(),
+      ),
+    );
+  }
+
+  if (index == 3) {
+    return; // ya estás en perfil
+  }
+}
 
   bool _pressed = false;
 

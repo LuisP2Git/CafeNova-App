@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/services/session_service.dart';
 
 class UsuariosPendientesScreen extends StatefulWidget {
-  final String token;
-
-  const UsuariosPendientesScreen({
-    super.key,
-    required this.token,
-  });
+  const UsuariosPendientesScreen({super.key});
 
   @override
   State<UsuariosPendientesScreen> createState() =>
@@ -17,21 +13,35 @@ class UsuariosPendientesScreen extends StatefulWidget {
 
 class _UsuariosPendientesScreenState
     extends State<UsuariosPendientesScreen> {
+
   List usuarios = [];
   bool cargando = true;
+
+  String? token;
 
   @override
   void initState() {
     super.initState();
-    obtenerPendientes();
+    initApp();
   }
 
+  // ================= INIT =================
+  Future<void> initApp() async {
+    token = await SessionService.getToken();
+
+    if (token == null) return;
+
+    await obtenerPendientes();
+  }
+
+  // ================= API =================
   Future<void> obtenerPendientes() async {
     try {
       final response = await http.get(
         Uri.parse('http://localhost:3000/usuarios/pendientes'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
+        headers: {'Authorization': 'Bearer $token'},
       );
+
       if (response.statusCode == 200) {
         setState(() {
           usuarios = jsonDecode(response.body);
@@ -47,26 +57,29 @@ class _UsuariosPendientesScreenState
 
   Future<void> aprobarUsuario(int id) async {
     await http.put(
-      Uri.parse('http://localhost:3000/usuarios/$id/aprobar'),
+      Uri.parse('http://localhost:3000/usuarios/aprobar/$id'),
       headers: {
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json'
       },
       body: jsonEncode({"rol": "empleado"}),
     );
+
     obtenerPendientes();
   }
 
   Future<void> rechazarUsuario(int id) async {
-    await http.put(
-      Uri.parse('http://localhost:3000/usuarios/$id/rechazar'),
+    await http.delete(
+      Uri.parse('http://localhost:3000/usuarios/$id'),
       headers: {
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
     );
+
     obtenerPendientes();
   }
 
+  // ================= UI =================
   void confirmarAccion(int id, bool aprobar) {
     showDialog(
       context: context,
@@ -121,22 +134,13 @@ class _UsuariosPendientesScreenState
                         const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Icon(Icons.eco, color: Colors.white),
-                  const SizedBox(width: 10),
-                  const Text(
-                    "Cafe Nova",
-                    style:
-                        TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  const Spacer(),
-                  const Text(
-                    "Pendientes",
-                    style: TextStyle(color: Colors.white),
-                  )
+                  const Text("Pendientes",
+                      style: TextStyle(color: Colors.white))
                 ],
               ),
             ),
           ),
+
           Expanded(
             child: cargando
                 ? const Center(child: CircularProgressIndicator())
@@ -148,71 +152,42 @@ class _UsuariosPendientesScreenState
                         itemCount: usuarios.length,
                         itemBuilder: (context, index) {
                           final user = usuarios[index];
+
                           return Container(
-                            margin:
-                                const EdgeInsets.only(bottom: 12),
+                            margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(15),
                             ),
                             child: Column(
                               crossAxisAlignment:
                                   CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.person,
-                                        color:
-                                            Color(0xFF6B7F66)),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        user['nombre_usuario'] ??
-                                            '',
-                                        style: const TextStyle(
-                                            fontWeight:
-                                                FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
                                 Text(
-                                    "Correo: ${user['correo'] ?? '-'}"),
-                                const SizedBox(height: 12),
+                                  user['nombre_usuario'] ?? '',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text("Correo: ${user['correo'] ?? '-'}"),
+
+                                const SizedBox(height: 10),
+
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.end,
                                   children: [
-                                    TextButton.icon(
-                                      icon: const Icon(
-                                          Icons.close,
-                                          color: Colors.red),
-                                      label:
-                                          const Text("Rechazar"),
+                                    TextButton(
                                       onPressed: () =>
                                           confirmarAccion(
                                               user['id_usuario'],
                                               false),
+                                      child: const Text("Rechazar"),
                                     ),
-                                    const SizedBox(width: 10),
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton
-                                          .styleFrom(
-                                        backgroundColor:
-                                            const Color(
-                                                0xFF6B7F66),
-                                      ),
-                                      icon: const Icon(
-                                          Icons.check),
-                                      label:
-                                          const Text("Aprobar"),
+                                    ElevatedButton(
                                       onPressed: () =>
-                                          confirmarAccion(
-                                              user['id_usuario'],
-                                              true),
+                                          confirmarAccion(user['id_usuario'] ?? user['id'], true),
+                                      child: const Text("Aprobar"),
                                     ),
                                   ],
                                 )

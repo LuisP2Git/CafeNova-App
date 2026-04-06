@@ -4,11 +4,10 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'usuarios_pendientes_screen.dart';
 import 'package:frontend/utils/mensajes.dart';
+import 'package:frontend/services/session_service.dart';
 
 class EmpleadosScreen extends StatefulWidget {
-  final String token;
-
-  const EmpleadosScreen({super.key, required this.token});
+  const EmpleadosScreen({super.key});
 
   @override
   State<EmpleadosScreen> createState() => _EmpleadosScreenState();
@@ -21,31 +20,45 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
 
   bool cargando = true;
 
+  String? token;
+
   final buscarController = TextEditingController();
   final cargoController = TextEditingController();
   final telefonoController = TextEditingController();
   final fechaController = TextEditingController();
+
   DateTime? fechaSeleccionada;
 
   int? fincaSeleccionada;
   int? idEditando;
+
+  @override
+  void initState() {
+    super.initState();
+    initApp();
+  }
+
+  Future<void> initApp() async {
+    token = await SessionService.getToken();
+
+    if (token == null) {
+      Mensajes.mostrar(context, "Sesión inválida", esError: true);
+      return;
+    }
+
+    await obtenerEmpleados();
+    await obtenerFincas();
+  }
 
   String formatearFecha(String fecha) {
     final f = DateTime.parse(fecha);
     return "${f.day}/${f.month}/${f.year}";
   }
 
-  @override
-  void initState() {
-    super.initState();
-    obtenerEmpleados();
-    obtenerFincas();
-  }
-
   Future<void> obtenerEmpleados() async {
     final res = await http.get(
       Uri.parse('http://localhost:3000/empleados'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (res.statusCode == 200) {
@@ -62,7 +75,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   Future<void> obtenerFincas() async {
     final res = await http.get(
       Uri.parse('http://localhost:3000/fincas'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (res.statusCode == 200) {
@@ -87,7 +100,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => UsuariosPendientesScreen(token: widget.token),
+        builder: (_) => const UsuariosPendientesScreen(),
       ),
     );
     obtenerEmpleados();
@@ -96,16 +109,25 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
   Future<void> eliminarEmpleado(int id) async {
     await http.delete(
       Uri.parse('http://localhost:3000/empleados/$id'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+      headers: {'Authorization': 'Bearer $token'},
     );
     obtenerEmpleados();
   }
 
   Future<void> editarEmpleado() async {
+    if (telefonoController.text.length != 10) {
+      Mensajes.mostrar(
+        context,
+        "El teléfono debe tener 10 dígitos",
+        esError: true,
+      );
+      return;
+    }
+
     await http.put(
       Uri.parse('http://localhost:3000/empleados/$idEditando'),
       headers: {
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json'
       },
       body: jsonEncode({
@@ -136,28 +158,14 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
       idEditando = emp['id_empleado'];
       cargoController.text = emp['cargo'] ?? '';
       telefonoController.text = emp['telefono'] ?? '';
-          if (telefonoController.text.length != 10) {
-            Mensajes.mostrar(
-              context,
-              "El teléfono debe tener exactamente 10 dígitos",
-              esError: true,
-            );
-            return;
-          }
-          if (emp['fecha_contratacion'] != null) {
-            try {
-              final fecha = DateTime.parse(emp['fecha_contratacion'].toString());
-              fechaSeleccionada = fecha;
-              fechaController.text =
-                  "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
-            } catch (e) {
-              fechaController.text = "";
-              fechaSeleccionada = null;
-            }
-          } else {
-            fechaController.text = "";
-            fechaSeleccionada = null;
-          }
+
+      if (emp['fecha_contratacion'] != null) {
+        final fecha = DateTime.parse(emp['fecha_contratacion']);
+        fechaSeleccionada = fecha;
+        fechaController.text =
+            "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
+      }
+
       fincaSeleccionada = emp['id_finca'];
     }
 
@@ -181,9 +189,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(10),
                   ],
-                  decoration: const InputDecoration(
-                    labelText: "Teléfono",
-                  ),
+                  decoration: const InputDecoration(labelText: "Teléfono"),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -211,7 +217,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
-                  initialValue: fincaSeleccionada,
+                  value: fincaSeleccionada,
                   hint: const Text("Seleccionar finca"),
                   items: fincas.map<DropdownMenuItem<int>>((finca) {
                     return DropdownMenuItem(
@@ -371,7 +377,8 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                                   const SizedBox(height: 10),
                                   Text("Cargo: ${emp['cargo'] ?? '-'}"),
                                   Text("Teléfono: ${emp['telefono'] ?? '-'}"),
-                                  Text("Fecha: ${emp['fecha_contratacion'] != null ? formatearFecha(emp['fecha_contratacion']): '-'}",),
+                                  Text(
+                                      "Fecha: ${emp['fecha_contratacion'] != null ? formatearFecha(emp['fecha_contratacion']) : '-'}"),
                                   Text(
                                     emp['nombre_finca'] != null
                                         ? "Finca: ${emp['nombre_finca']}"

@@ -49,7 +49,6 @@ class _AuthCheckState extends State<AuthCheck> {
           builder: (_) => HomeScreen(
             nombre: nombre,
             correo: correo,
-            token: token,
             rol: rol,
           ),
         ),

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/services/session_service.dart';
+import 'package:frontend/screens/reportes_screen.dart';
+import 'package:frontend/screens/profile_screen.dart';
 
 class LotesScreen extends StatefulWidget {
-final String nombreUsuario;
+  final String nombreUsuario;
 
   const LotesScreen({super.key, required this.nombreUsuario});
 
@@ -12,7 +15,6 @@ final String nombreUsuario;
 }
 
 class _LotesScreenState extends State<LotesScreen> {
-
   late String nombreUsuario;
 
   List lotes = [];
@@ -25,19 +27,27 @@ class _LotesScreenState extends State<LotesScreen> {
   int? fincaSeleccionada;
   int? idEditando;
 
+  String? token;
+
   final int _selectedIndex = 1;
 
   @override
   void initState() {
     super.initState();
-    obtenerLotes();
-    obtenerFincas();
     nombreUsuario = widget.nombreUsuario;
+    init();
+  }
+
+  Future<void> init() async {
+    token = await SessionService.getToken();
+    await obtenerLotes();
+    await obtenerFincas();
   }
 
   Future<void> obtenerLotes() async {
     final response = await http.get(
       Uri.parse('http://localhost:3000/lotes'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -50,6 +60,7 @@ class _LotesScreenState extends State<LotesScreen> {
   Future<void> obtenerFincas() async {
     final response = await http.get(
       Uri.parse('http://localhost:3000/fincas'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
@@ -60,6 +71,8 @@ class _LotesScreenState extends State<LotesScreen> {
   }
 
   Future<void> guardarLote() async {
+    if (fincaSeleccionada == null) return;
+
     final url = idEditando == null
         ? 'http://localhost:3000/lotes'
         : 'http://localhost:3000/lotes/$idEditando';
@@ -68,7 +81,10 @@ class _LotesScreenState extends State<LotesScreen> {
 
     final response = await method(
       Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
       body: jsonEncode({
         'id_finca': fincaSeleccionada,
         'nombre_lote': nombreController.text,
@@ -77,7 +93,7 @@ class _LotesScreenState extends State<LotesScreen> {
       }),
     );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       limpiarCampos();
       Navigator.pop(context);
       obtenerLotes();
@@ -87,6 +103,7 @@ class _LotesScreenState extends State<LotesScreen> {
   Future<void> eliminarLote(int id) async {
     await http.delete(
       Uri.parse('http://localhost:3000/lotes/$id'),
+      headers: {'Authorization': 'Bearer $token'},
     );
     obtenerLotes();
   }
@@ -99,64 +116,80 @@ class _LotesScreenState extends State<LotesScreen> {
     idEditando = null;
   }
 
-  void mostrarFormulario({Map? lote}) {
-    if (lote != null) {
+  void mostrarFormulario({Map? lote}) async {
+    if (fincas.isEmpty) {
+      await obtenerFincas();
+    }
+
+    if (lote == null) {
+      limpiarCampos();
+    } else {
       idEditando = lote['id_lote'];
       nombreController.text = lote['nombre_lote'];
       areaController.text = lote['area'].toString();
       tipoController.text = lote['tipo_suelo'];
-      fincaSeleccionada = lote['id_finca'];
+
+      fincaSeleccionada = int.parse(lote['id_finca'].toString());
     }
 
     showDialog(
       context: context,
       builder: (_) {
-        return AlertDialog(
-          title: Text(lote == null ? "Nuevo Lote" : "Editar Lote"),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                DropdownButtonFormField<int>(
-                  initialValue: fincaSeleccionada,
-                  hint: const Text("Seleccionar Finca"),
-                  items: fincas.map<DropdownMenuItem<int>>((finca) {
-                    return DropdownMenuItem<int>(
-                      value: finca['id_finca'],
-                      child: Text(finca['nombre_finca']),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    fincaSeleccionada = value;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(lote == null ? "Nuevo Lote" : "Editar Lote"),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    DropdownButtonFormField<int>(
+                      value: fincaSeleccionada,
+                      hint: const Text("Seleccionar Finca"),
+                      isExpanded: true,
+                      items: fincas.map<DropdownMenuItem<int>>((finca) {
+                        return DropdownMenuItem<int>(
+                          value: int.parse(finca['id_finca'].toString()),
+                          child: Text(finca['nombre_finca']),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          fincaSeleccionada = value;
+                        });
+                      },
+                    ),
+                    TextField(
+                      controller: nombreController,
+                      decoration:
+                          const InputDecoration(labelText: "Nombre Lote"),
+                    ),
+                    TextField(
+                      controller: areaController,
+                      decoration: const InputDecoration(labelText: "Área"),
+                    ),
+                    TextField(
+                      controller: tipoController,
+                      decoration:
+                          const InputDecoration(labelText: "Tipo de suelo"),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    limpiarCampos();
+                    Navigator.pop(context);
                   },
+                  child: const Text("Cancelar"),
                 ),
-                TextField(
-                  controller: nombreController,
-                  decoration: const InputDecoration(labelText: "Nombre Lote"),
-                ),
-                TextField(
-                  controller: areaController,
-                  decoration: const InputDecoration(labelText: "Área"),
-                ),
-                TextField(
-                  controller: tipoController,
-                  decoration: const InputDecoration(labelText: "Tipo de suelo"),
+                ElevatedButton(
+                  onPressed: guardarLote,
+                  child: const Text("Guardar"),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                limpiarCampos();
-                Navigator.pop(context);
-              },
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: guardarLote,
-              child: const Text("Guardar"),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -186,9 +219,73 @@ class _LotesScreenState extends State<LotesScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pop(context); 
-    }
+  if (index == 0) {
+    Navigator.pop(context); // Home
+  }
+
+  if (index == 1) {
+    return; // ya estás en Lotes
+  }
+
+  if (index == 2) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReportesScreen(),
+      ),
+    );
+  }
+
+  if (index == 3) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          nombre: nombreUsuario,
+          correo: '', // si lo tienes pásalo
+        ),
+      ),
+    );
+  }
+}
+
+  Widget loteCard(Map lote) {
+    return GestureDetector(
+      onTap: () => mostrarFormulario(lote: lote),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.eco, color: Color(0xFF6B7F66)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "${lote['nombre_lote']} - ${lote['nombre_finca']}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () =>
+                      confirmarEliminacion(lote['id_lote']),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text("Área: ${lote['area'] ?? '-'} hectáreas"),
+            Text("Ubicación: ${lote['tipo_suelo'] ?? '-'}"),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -214,31 +311,18 @@ class _LotesScreenState extends State<LotesScreen> {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back,
+                            color: Colors.white),
                         onPressed: () => Navigator.pop(context),
                       ),
                       const Icon(Icons.eco, color: Colors.white),
                       const SizedBox(width: 10),
                       const Text("Cafe Nova",
-                          style: TextStyle(color: Colors.white, fontSize: 18)),
+                          style: TextStyle(color: Colors.white)),
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(nombreUsuario,
-                      style: TextStyle(color: Colors.white)),
-                      Row(
-                        children: [
-                          Icon(Icons.circle,
-                              size: 10, color: Colors.greenAccent),
-                          SizedBox(width: 5),
-                          Text("Conectado",
-                              style: TextStyle(color: Colors.white)),
-                        ],
-                      )
-                    ],
-                  )
+                  Text(nombreUsuario,
+                      style: const TextStyle(color: Colors.white)),
                 ],
               ),
             ),
@@ -247,12 +331,10 @@ class _LotesScreenState extends State<LotesScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Mis Lotes",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
+                  const Text("Mis Lotes",
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 15),
                   ...lotes.map((lote) => loteCard(lote)),
                 ],
@@ -267,88 +349,37 @@ class _LotesScreenState extends State<LotesScreen> {
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: const Color(0xFF6B7F66),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),
-          BottomNavigationBarItem(icon: Icon(Icons.eco), label: "Lotes"),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Reportes"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
-        ],
-      ),
-    );
-  }
+  currentIndex: _selectedIndex,
+  onTap: _onItemTapped,
 
-  Widget loteCard(Map lote) {
-    return GestureDetector(
-      onTap: () => mostrarFormulario(lote: lote),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 5,
-              offset: const Offset(2, 2),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.eco, color: Color(0xFF6B7F66)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    "${lote['nombre_lote']} - ${lote['nombre_finca']}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () =>
-                      confirmarEliminacion(lote['id_lote']),
-                ),
-              ],
-            ),
+  backgroundColor: Colors.white, // 🔥 fondo sólido
 
-            const SizedBox(height: 10),
+  selectedItemColor: const Color(0xFF6B7F66), // verde CafeNova
+  unselectedItemColor: Colors.black54, // 🔥 MÁS visible
 
-            Text("Área: ${lote['area'] ?? '-'} hectáreas"),
-            Text("Ubicación: ${lote['tipo_suelo'] ?? '-'}"),
+  showUnselectedLabels: true, // 🔥 importante
 
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F1ED),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.agriculture,
-                      size: 16, color: Color(0xFF6B7F66)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Variedad: ${lote['tipo_suelo'] ?? 'No definida'}",
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                  const Icon(Icons.arrow_forward_ios, size: 12),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+  type: BottomNavigationBarType.fixed, // evita cambios raros
+
+  items: const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.home),
+      label: "Inicio",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.eco),
+      label: "Lotes",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.bar_chart),
+      label: "Reportes",
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person),
+      label: "Perfil",
+    ),
+  ],
+),
     );
   }
 }

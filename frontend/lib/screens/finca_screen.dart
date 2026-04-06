@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/services/session_service.dart';
 
 class FincasScreen extends StatefulWidget {
   final String nombreUsuario;
-  final String token;
 
   const FincasScreen({
     super.key,
     required this.nombreUsuario,
-    required this.token,
   });
 
   @override
@@ -35,12 +34,22 @@ class _FincasScreenState extends State<FincasScreen> {
 
   int? idEditando;
 
+  String? token;
+
   @override
   void initState() {
     super.initState();
     nombreUsuario = widget.nombreUsuario;
-    obtenerFincas();
-    obtenerDepartamentos();
+    initApp();
+  }
+
+  Future<void> initApp() async {
+    token = await SessionService.getToken();
+
+    if (token == null) return;
+
+    await obtenerFincas();
+    await obtenerDepartamentos();
   }
 
   Future<void> obtenerDepartamentos() async {
@@ -77,7 +86,7 @@ class _FincasScreenState extends State<FincasScreen> {
     final response = await http.get(
       Uri.parse('http://localhost:3000/fincas'),
       headers: {
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -125,7 +134,7 @@ class _FincasScreenState extends State<FincasScreen> {
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
         'nombre_finca': nombreController.text.trim(),
@@ -146,7 +155,7 @@ class _FincasScreenState extends State<FincasScreen> {
     await http.delete(
       Uri.parse('http://localhost:3000/fincas/$id'),
       headers: {
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
     );
     obtenerFincas();
@@ -181,32 +190,45 @@ class _FincasScreenState extends State<FincasScreen> {
   }
 
   void mostrarFormulario({Map? finca}) async {
-    if (finca != null) {
-      idEditando = finca['id_finca'];
-      nombreController.text = finca['nombre_finca'];
-      tamanoController.text = finca['tamano_hectareas'].toString();
-      propietarioController.text = finca['propietario'];
 
-      final ubicacion = finca['ubicacion'] ?? "";
+  if (finca == null) {
+    // 👉 SOLO limpiar campos, NO idEditando aún
+    nombreController.clear();
+    tamanoController.clear();
+    propietarioController.clear();
+    departamentoSeleccionado = null;
+    municipioSeleccionado = null;
+    municipios = [];
 
-      if (ubicacion.contains(" - ")) {
-        final partes = ubicacion.split(" - ");
-        final nombreDep = partes[0];
-        final nombreMun = partes[1];
+    idEditando = null; // esto sí va aquí
+  }
 
-        final dep = departamentos.firstWhere(
-          (d) => d['name'] == nombreDep,
-          orElse: () => {},
-        );
+  if (finca != null) {
+    idEditando = finca['id_finca'];
 
-        if (dep.isNotEmpty) {
-          departamentoSeleccionado = dep['id'].toString();
-          await obtenerMunicipios(departamentoSeleccionado!);
-          municipioSeleccionado = nombreMun;
-        }
+    nombreController.text = finca['nombre_finca'];
+    tamanoController.text = finca['tamano_hectareas'].toString();
+    propietarioController.text = finca['propietario'];
+
+    final ubicacion = finca['ubicacion'] ?? "";
+
+    if (ubicacion.contains(" - ")) {
+      final partes = ubicacion.split(" - ");
+      final nombreDep = partes[0];
+      final nombreMun = partes[1];
+
+      final dep = departamentos.firstWhere(
+        (d) => d['name'] == nombreDep,
+        orElse: () => {},
+      );
+
+      if (dep.isNotEmpty) {
+        departamentoSeleccionado = dep['id'].toString();
+        await obtenerMunicipios(departamentoSeleccionado!);
+        municipioSeleccionado = nombreMun;
       }
     }
-
+  }
     showDialog(
       context: context,
       builder: (_) {

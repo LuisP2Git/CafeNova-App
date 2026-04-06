@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/IA_screen.dart';
+import 'package:frontend/screens/cosecha_screen.dart';
 import 'package:frontend/screens/employees_screen.dart';
+import 'package:frontend/screens/reportes_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/screens/finca_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/utils/mensajes.dart';
+import 'package:frontend/services/session_service.dart';
+import 'package:frontend/screens/cultivos_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String nombre;
   final String correo;
-  final String token;
   final String rol;
 
   const HomeScreen({
     super.key,
     required this.nombre,
     required this.correo,
-    required this.token,
     required this.rol,
   });
 
@@ -31,34 +33,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List lotes = [];
   int _selectedIndex = 0;
+  String? token;
 
   @override
   void initState() {
     super.initState();
-    verificarSesion();
-    obtenerLotes();
+    initApp();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Mensajes.mostrar(context, 'Bienvenido ${widget.nombre} (${widget.rol})');
     });
   }
 
-  Future<void> verificarSesion() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+  Future<void> initApp() async {
+    token = await SessionService.getToken();
 
     if (token == null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
+      return;
     }
+
+    await obtenerLotes();
   }
 
   Future<void> obtenerLotes() async {
     try {
       final response = await http.get(
         Uri.parse('http://localhost:3000/lotes'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
@@ -75,17 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> irALotes() async {
     await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LotesScreen(
-          nombreUsuario: widget.nombre,
-        ),
-      ),
-    );
+  context,
+  MaterialPageRoute(
+    builder: (_) => LotesScreen(nombreUsuario: widget.nombre),
+  ),
+);
 
-    setState(() {
-      _selectedIndex = 0;
-    });
+// 🔥 RECARGAR AL VOLVER
+await obtenerLotes();
   }
 
   Future<void> irAFincas() async {
@@ -97,15 +99,9 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => FincasScreen(
-          nombreUsuario: widget.nombre, token: widget.token,
-        ),
+        builder: (_) => FincasScreen(nombreUsuario: widget.nombre),
       ),
     );
-
-    setState(() {
-      _selectedIndex = 0;
-    });
   }
 
   Future<void> irAEmpleados() async {
@@ -117,16 +113,46 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EmpleadosScreen(
-          token: widget.token,
-        ),
+        builder: (_) => const EmpleadosScreen(),
       ),
     );
-
-    setState(() {
-      _selectedIndex = 0;
-    });
   }
+
+  Future<void> irAReportes() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ReportesScreen(),
+    ),
+  );
+}
+
+Future<void> irACosechas() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => CosechaScreen(),
+    ),
+  );
+}
+
+Future<void> irAIA() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => IAScreen(),
+    ),
+  );
+}
+
+Future<void> irACultivos() async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const CultivoScreen(),
+    ),
+  );
+}
 
   void _onItemTapped(int index) {
     if (index == 3) {
@@ -136,7 +162,6 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (_) => ProfileScreen(
             nombre: widget.nombre,
             correo: widget.correo,
-            token: widget.token,
           ),
         ),
       );
@@ -159,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -171,6 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
         ],
       ),
+
       body: Column(
         children: [
           Container(
@@ -214,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -224,7 +252,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     "Dashboard",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
+
                   const SizedBox(height: 15),
+
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
@@ -239,16 +269,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       dashboardCard("Lotes", Icons.eco, irALotes),
 
                       if (widget.rol == 'admin')
-                        dashboardCard("Empleados", Icons.people, irAEmpleados),
+                      dashboardCard("Empleados", Icons.people, irAEmpleados),
 
-                      if (widget.rol == 'admin')
-                        dashboardCard("Inventario", Icons.inventory, () {}),
+                      dashboardCard("Reportes", Icons.bar_chart, irAReportes),
 
-                      dashboardCard("Reportes", Icons.bar_chart, () {}),
-                      dashboardCard("IA", Icons.smart_toy, () {}),
+                      dashboardCard("Cultivos", Icons.spa, irACultivos),
+
+                      dashboardCard("Cosechas", Icons.agriculture, irACosechas),
+
+                      dashboardCard("IA", Icons.psychology, irAIA)
+
                     ],
                   ),
+
                   const SizedBox(height: 20),
+
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -274,7 +309,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+
                         const SizedBox(height: 10),
+
                         lotes.isEmpty
                             ? const Padding(
                                 padding: EdgeInsets.all(10),
@@ -308,20 +345,13 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 5,
-              offset: const Offset(2, 2),
-            )
-          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icono, size: 35, color: const Color(0xFF6B7F66)),
             const SizedBox(height: 8),
-            Text(titulo, style: const TextStyle(fontSize: 13)),
+            Text(titulo),
           ],
         ),
       ),
