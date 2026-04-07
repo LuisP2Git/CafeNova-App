@@ -4,13 +4,10 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-<<<<<<< HEAD
 const PDFDocument = require('pdfkit');
-=======
 const dotenv = require('dotenv');
 const axios = require('axios');
 process.env.DEEPSEEK_API_KEY
->>>>>>> 3609145a16034bb1c6027c572fcaf7d463777603
 
 const app = express();
 app.use(cors());
