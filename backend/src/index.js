@@ -4,6 +4,9 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const dotenv = require('dotenv');
+const axios = require('axios');
+process.env.DEEPSEEK_API_KEY
 
 const app = express();
 app.use(cors());
@@ -614,7 +617,49 @@ app.delete('/usuarios/:id', verificarToken, soloAdmin, (req, res) => {
         }
     );
 });
+app.post('/ia', async (req, res) => {
+    try {
+        const { pregunta } = req.body;
+
+        const response = await axios.post(
+            'https://api.deepseek.com/chat/completions',
+            {
+                model: "deepseek-chat",
+                messages: [
+                    {
+                        role: "system",
+                        content: `
+Eres un experto caficultor colombiano.
+Responde claro, corto y práctico.
+Ayuda con plagas, cosecha, fertilización y café.
+`
+                    },
+                    {
+                        role: "user",
+                        content: pregunta
+                    }
+                ]
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        res.json({
+            respuesta: response.data.choices[0].message.content
+        });
+
+    } catch (error) {
+        console.error("ERROR IA:", error.response?.data || error.message);
+        res.status(500).json({ error: 'Error con IA' });
+    }
+});
 
 // ===================== SERVER =====================
+console.log(process.env.DEEPSEEK_API_KEY);
+
 
 app.listen(3000, () => console.log('Servidor corriendo en http://localhost:3000'));
