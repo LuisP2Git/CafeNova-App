@@ -617,9 +617,11 @@ app.delete('/usuarios/:id', verificarToken, soloAdmin, (req, res) => {
         }
     );
 });
-app.post('/ia', async (req, res) => {
+// ===================== IA =====================
+app.post('/ia', verificarToken, async (req, res) => {
     try {
         const { pregunta } = req.body;
+        const id_usuario = req.usuario.id_usuario;
 
         const response = await axios.post(
             'https://api.deepseek.com/chat/completions',
@@ -630,8 +632,7 @@ app.post('/ia', async (req, res) => {
                         role: "system",
                         content: `
 Eres un experto caficultor colombiano.
-Responde claro, corto y práctico.
-Ayuda con plagas, cosecha, fertilización y café.
+Responde claro y práctico.
 `
                     },
                     {
@@ -648,14 +649,35 @@ Ayuda con plagas, cosecha, fertilización y café.
             }
         );
 
-        res.json({
-            respuesta: response.data.choices[0].message.content
-        });
+        const respuesta = response.data.choices[0].message.content;
+
+        // 🔥 GUARDAR EN DB
+        db.query(
+            `INSERT INTO ia_mensajes (id_usuario, mensaje, respuesta)
+             VALUES (?, ?, ?)`,
+            [id_usuario, pregunta, respuesta]
+        );
+
+        res.json({ respuesta });
 
     } catch (error) {
-        console.error("ERROR IA:", error.response?.data || error.message);
+        console.log("ERROR IA:", error.response?.data || error.message);
         res.status(500).json({ error: 'Error con IA' });
     }
+});
+app.get('/ia/historial', verificarToken, (req, res) => {
+    const id_usuario = req.usuario.id_usuario;
+
+    db.query(
+        `SELECT * FROM ia_mensajes 
+         WHERE id_usuario = ?
+         ORDER BY fecha ASC`,
+        [id_usuario],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(results);
+        }
+    );
 });
 
 // ===================== SERVER =====================
