@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:frontend/utils/mensajes.dart';
 import '../services/api_service.dart';
 import '../services/session_service.dart';
 
-// 🔥 IMPORTACIONES NECESARIAS
-import 'home_screen.dart';
 import 'lotes_screen.dart';
 import 'profile_screen.dart';
 
@@ -16,13 +15,32 @@ class ReportesScreen extends StatefulWidget {
 }
 
 class _ReportesScreenState extends State<ReportesScreen> {
+  String formatearMes(String mes) {
+    const meses = {
+      "01": "Ene",
+      "02": "Feb",
+      "03": "Mar",
+      "04": "Abr",
+      "05": "May",
+      "06": "Jun",
+      "07": "Jul",
+      "08": "Ago",
+      "09": "Sep",
+      "10": "Oct",
+      "11": "Nov",
+      "12": "Dic",
+    };
+
+    final m = mes.substring(5);
+    return meses[m] ?? m;
+  }
 
   List mensual = [];
   List calidad = [];
   List porFecha = [];
 
   double total = 0;
-  int? mejorCultivo;
+  String? mejorCultivo;
 
   DateTime? desde;
   DateTime? hasta;
@@ -36,7 +54,6 @@ class _ReportesScreenState extends State<ReportesScreen> {
     initApp();
   }
 
-  // ================= INIT =================
   Future<void> initApp() async {
     token = await SessionService.getToken();
     if (token == null) return;
@@ -53,8 +70,10 @@ class _ReportesScreenState extends State<ReportesScreen> {
     setState(() {
       mensual = m;
       calidad = c;
-      total = (t['total_kg'] ?? 0).toDouble();
-      mejorCultivo = mejor['id_cultivo'];
+      total = double.tryParse(t['total_kg']?.toString() ?? '0') ?? 0;
+
+      mejorCultivo =
+          "${mejor['tipo_cultivo'] ?? ''} - ${mejor['variedad'] ?? ''}";
     });
   }
 
@@ -92,54 +111,31 @@ class _ReportesScreenState extends State<ReportesScreen> {
     }
   }
 
-  // ================= NAV (ARREGLADO) =================
+  // ================= NAV =================
   void _onItemTapped(int index) {
-    if (index == _selectedIndex) return;
-
-    switch (index) {
-
-      case 0: // HOME
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => HomeScreen(
-              nombre: "Usuario",
-              correo: "correo@email.com",
-              rol: "admin",
-            ),
-          ),
-        );
-        break;
-
-      case 1: // LOTES
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const LotesScreen(nombreUsuario: "Usuario"),
-          ),
-        );
-        break;
-
-      case 2:
-        // ya estás aquí
-        break;
-
-      case 3: // PERFIL
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const ProfileScreen(
-              nombre: "Usuario",
-              correo: "correo@email.com",
-            ),
-          ),
-        );
-        break;
+    if (index == 0) {
+      Navigator.pop(context);
     }
 
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LotesScreen(nombreUsuario: "Usuario"),
+        ),
+      );
+    }
+
+    if (index == 2) return;
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(nombre: "Usuario", correo: ""),
+        ),
+      );
+    }
   }
 
   // ================= UI =================
@@ -148,23 +144,9 @@ class _ReportesScreenState extends State<ReportesScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: const Color(0xFF6B7F66),
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),
-          BottomNavigationBarItem(icon: Icon(Icons.eco), label: "Lotes"),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Reportes"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
-        ],
-      ),
-
       body: Column(
         children: [
-
-          // HEADER
+          // HEADER (igual a lotes)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
@@ -175,77 +157,135 @@ class _ReportesScreenState extends State<ReportesScreen> {
                 bottomRight: Radius.circular(25),
               ),
             ),
-            child: const SafeArea(
+            child: SafeArea(
               child: Row(
-                children: [
+                children: const [
                   Icon(Icons.bar_chart, color: Colors.white),
                   SizedBox(width: 10),
-                  Text("Reportes",
-                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                  Text("Reportes", style: TextStyle(color: Colors.white)),
                 ],
               ),
             ),
           ),
 
-          // CONTENIDO
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  const Text("Resumen",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Resumen",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
 
                   const SizedBox(height: 15),
 
                   card("📊 Producción Total", "$total kg"),
-                  card("🏆 Mejor Cultivo", "ID: $mejorCultivo"),
+                  card("🏆 Mejor Cultivo", mejorCultivo ?? "N/A"),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
+
+                  // PDF
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final ok = await ApiService.descargarPDF(token!);
+                  
+                      if (ok) {
+                        Mensajes.mostrar(context, "PDF descargado correctamente");
+                      } else {
+                        Mensajes.mostrar(context, "Error al descargar PDF", esError: true);
+                      }
+                    },
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text("Descargar PDF"),
+                  ),
+
+                  const SizedBox(height: 25),
 
                   const Text("📅 Producción por Mes"),
                   const SizedBox(height: 10),
 
-                  SizedBox(
-                    height: 200,
-                    child: BarChart(
-                      BarChartData(
-                        barGroups: mensual.asMap().entries.map((e) {
-                          return BarChartGroupData(
-                            x: e.key,
-                            barRods: [
-                              BarChartRodData(
-                                toY: (e.value['total_kg'] ?? 0).toDouble(),
-                              )
-                            ],
-                          );
-                        }).toList(),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: SizedBox(
+                      height: 200,
+                      child: BarChart(
+                        BarChartData(
+                          titlesData: FlTitlesData(
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) {
+                                  final index = value.toInt();
+                                  if (index < mensual.length) {
+                                    return Text(
+                                      formatearMes(mensual[index]['mes']),
+                                      style: const TextStyle(fontSize: 10),
+                                    );
+                                  }
+                                  return const Text('');
+                                },
+                              ),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: true),
+                            ),
+                          ),
+                          gridData: FlGridData(show: true),
+                          borderData: FlBorderData(show: false),
+                          barGroups: mensual.asMap().entries.map((e) {
+                            return BarChartGroupData(
+                              x: e.key,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: (e.value['total_kg'] ?? 0).toDouble(),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   const Text("☕ Calidad del Café"),
                   const SizedBox(height: 10),
 
-                  SizedBox(
-                    height: 200,
-                    child: PieChart(
-                      PieChartData(
-                        sections: calidad.map((e) {
-                          return PieChartSectionData(
-                            value: (e['total_kg'] ?? 0).toDouble(),
-                            title: e['calidad'],
-                          );
-                        }).toList(),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: SizedBox(
+                      height: 200,
+                      child: PieChart(
+                        PieChartData(
+                          sections: calidad.map((e) {
+                            return PieChartSectionData(
+                              color: e['calidad'] == 'Alta'
+                                  ? Colors.green
+                                  : e['calidad'] == 'Media'
+                                  ? Colors.orange
+                                  : Colors.red,
+                              value: (e['total_kg'] ?? 0).toDouble(),
+                              title: "${e['calidad']}\n${e['total_kg']}kg",
+                              radius: 60,
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
 
                   const Text("📈 Filtrar por Fechas"),
                   const SizedBox(height: 10),
@@ -274,45 +314,105 @@ class _ReportesScreenState extends State<ReportesScreen> {
                   if (porFecha.isNotEmpty) ...[
                     const Text("Tendencia"),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      height: 200,
-                      child: LineChart(
-                        LineChartData(
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: porFecha.asMap().entries.map((e) {
-                                return FlSpot(
-                                  e.key.toDouble(),
-                                  (e.value['total_kg'] ?? 0).toDouble(),
-                                );
-                              }).toList(),
-                            )
-                          ],
+
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: SizedBox(
+                        height: 200,
+                        child: LineChart(
+                          LineChartData(
+                            titlesData: FlTitlesData(
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (value, meta) {
+                                    final index = value.toInt();
+                                    if (index < porFecha.length) {
+                                      String fecha = porFecha[index]['fecha'];
+                                      return Text(
+                                        fecha.substring(5),
+                                        style: const TextStyle(fontSize: 10),
+                                      );
+                                    }
+                                    return const Text('');
+                                  },
+                                ),
+                              ),
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: true),
+                              ),
+                            ),
+                            gridData: FlGridData(show: true),
+                            lineBarsData: [
+                              LineChartBarData(
+                                isCurved: true,
+                                dotData: FlDotData(show: true),
+                                barWidth: 3,
+                                spots: porFecha.asMap().entries.map((e) {
+                                  return FlSpot(
+                                    e.key.toDouble(),
+                                    (e.value['total_kg'] ?? 0).toDouble(),
+                                  );
+                                }).toList(),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ]
+                  ],
                 ],
               ),
             ),
-          )
+          ),
+        ],
+      ),
+
+      // 🔻 NAV IGUAL A LOTES
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF6B7F66),
+        unselectedItemColor: Colors.black54,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),
+          BottomNavigationBarItem(icon: Icon(Icons.eco), label: "Lotes"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: "Reportes",
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
         ],
       ),
     );
   }
 
-  // CARD
+  // ================= CARD =================
   Widget card(String titulo, String valor) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+        ],
       ),
-      child: ListTile(
-        title: Text(titulo),
-        subtitle: Text(valor),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          Text(valor),
+        ],
       ),
     );
   }

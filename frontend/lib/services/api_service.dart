@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
 class ApiService {
@@ -48,12 +49,33 @@ class ApiService {
   }
 
   static Future<List> getPorFecha(
-      String token, String desde, String hasta) async {
-    final res = await http.get(
-      Uri.parse('$baseUrl/reportes/cosecha-por-fecha?desde=$desde&hasta=$hasta'),
-      headers: headers(token),
-    );
+    String token, String desde, String hasta) async {
+  final res = await http.get(
+    Uri.parse('$baseUrl/reportes/por-fecha?desde=$desde&hasta=$hasta'),
+    headers: headers(token),
+  );
 
-    return jsonDecode(res.body);
+  return jsonDecode(res.body);
+ }
+
+  static Future<bool> descargarPDF(String token) async {
+  final res = await http.get(
+    Uri.parse('$baseUrl/reportes/pdf'),
+    headers: headers(token),
+  );
+
+  if (res.statusCode == 200) {
+    final blob = html.Blob([res.bodyBytes]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+
+    final _ = html.AnchorElement(href: url)
+      ..setAttribute("download", "reporte.pdf")
+      ..click();
+
+    html.Url.revokeObjectUrl(url);
+    return true;
+  } else {
+    return false;
   }
+ }
 }

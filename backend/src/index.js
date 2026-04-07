@@ -4,9 +4,13 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+<<<<<<< HEAD
+const PDFDocument = require('pdfkit');
+=======
 const dotenv = require('dotenv');
 const axios = require('axios');
 process.env.DEEPSEEK_API_KEY
+>>>>>>> 3609145a16034bb1c6027c572fcaf7d463777603
 
 const app = express();
 app.use(cors());
@@ -428,9 +432,17 @@ app.delete('/cosecha/:id', (req, res) => {
   );
 });
 
-// ===================== REPORTES (FILTRADOS POR ADMIN) =====================
+// ===================== REPORTES =====================
+// 🔐 ROLES: ADMIN Y EMPLEADO PUEDEN VER
+function adminOEmpleado(req, res, next) {
+    if (req.usuario.rol !== 'admin' && req.usuario.rol !== 'empleado') {
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    next();
+}
 
-app.get('/reportes/total-cosecha', verificarToken, (req, res) => {
+// ================= TOTAL COSECHA =================
+app.get('/reportes/total-cosecha', verificarToken, adminOEmpleado, (req, res) => {
     db.query(`
         SELECT SUM(c.cantidad_kg) AS total_kg
         FROM cosecha c
@@ -440,11 +452,12 @@ app.get('/reportes/total-cosecha', verificarToken, (req, res) => {
         WHERE f.id_admin = ?
     `, [req.usuario.id_usuario], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(result[0]);
+        res.json(result[0] || { total_kg: 0 });
     });
 });
 
-app.get('/reportes/cosecha-mensual', verificarToken, (req, res) => {
+// ================= COSECHA MENSUAL =================
+app.get('/reportes/cosecha-mensual', verificarToken, adminOEmpleado, (req, res) => {
     db.query(`
         SELECT DATE_FORMAT(c.fecha_cosecha, '%Y-%m') AS mes,
                SUM(c.cantidad_kg) AS total_kg
@@ -461,7 +474,8 @@ app.get('/reportes/cosecha-mensual', verificarToken, (req, res) => {
     });
 });
 
-app.get('/reportes/por-calidad', verificarToken, (req, res) => {
+// ================= POR CALIDAD =================
+app.get('/reportes/por-calidad', verificarToken, adminOEmpleado, (req, res) => {
     db.query(`
         SELECT c.calidad, SUM(c.cantidad_kg) AS total_kg
         FROM cosecha c
@@ -476,7 +490,8 @@ app.get('/reportes/por-calidad', verificarToken, (req, res) => {
     });
 });
 
-app.get('/reportes/mejor-cultivo', verificarToken, (req, res) => {
+// ================= MEJOR CULTIVO =================
+app.get('/reportes/mejor-cultivo', verificarToken, adminOEmpleado, (req, res) => {
     db.query(`
         SELECT cu.tipo_cultivo, cu.variedad, SUM(c.cantidad_kg) AS total
         FROM cosecha c
@@ -489,7 +504,86 @@ app.get('/reportes/mejor-cultivo', verificarToken, (req, res) => {
         LIMIT 1
     `, [req.usuario.id_usuario], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(result[0]);
+        res.json(result[0] || {});
+    });
+});
+
+// ================= REPORTE POR FECHA =================
+app.get('/reportes/por-fecha', verificarToken, adminOEmpleado, (req, res) => {
+    const { desde, hasta } = req.query;
+
+    if (!desde || !hasta) {
+        return res.status(400).json({ error: 'Fechas requeridas' });
+    }
+
+    db.query(`
+        SELECT DATE(c.fecha_cosecha) AS fecha,
+               SUM(c.cantidad_kg) AS total_kg
+        FROM cosecha c
+        JOIN cultivo cu ON c.id_cultivo = cu.id_cultivo
+        JOIN lote l ON cu.id_lote = l.id_lote
+        JOIN finca f ON l.id_finca = f.id_finca
+        WHERE f.id_admin = ?
+        AND c.fecha_cosecha BETWEEN ? AND ?
+        GROUP BY fecha
+        ORDER BY fecha
+    `, [req.usuario.id_usuario, desde, hasta], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(result);
+    });
+});
+
+// ================= PDF (ADMIN Y EMPLEADO) =================
+app.get('/reportes/pdf', verificarToken, adminOEmpleado, (req, res) => {
+
+    const doc = new PDFDocument({ margin: 40 });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=reporte.pdf');
+
+    doc.pipe(res);
+
+    doc.fontSize(20).text('Reporte Cafetera Nova', { align: 'center' });
+    doc.moveDown();
+
+    doc.fontSize(10).text(`Fecha: ${new Date().toLocaleDateString()}`);
+    doc.moveDown();
+
+    doc.fontSize(14).text('Producción por Fecha', { underline: true });
+    doc.moveDown();
+
+    db.query(`
+        SELECT DATE(c.fecha_cosecha) AS fecha,
+               SUM(c.cantidad_kg) AS total_kg
+        FROM cosecha c
+        JOIN cultivo cu ON c.id_cultivo = cu.id_cultivo
+        JOIN lote l ON cu.id_lote = l.id_lote
+        JOIN finca f ON l.id_finca = f.id_finca
+        WHERE f.id_admin = ?
+        GROUP BY fecha
+        ORDER BY fecha
+    `, [req.usuario.id_usuario], (err, results) => {
+
+        if (err) {
+            doc.text('Error generando reporte');
+            doc.end();
+            return;
+        }
+
+        let total = 0;
+
+        results.forEach(r => {
+            total += r.total_kg;
+            doc.text(`📅 ${r.fecha}   →   ${r.total_kg} kg`);
+        });
+
+        doc.moveDown();
+
+        doc.fontSize(14).text(`Total Producción: ${total} kg`, {
+            align: 'right'
+        });
+
+        doc.end();
     });
 });
 
