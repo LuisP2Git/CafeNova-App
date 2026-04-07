@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:frontend/services/session_service.dart';
 
 class IAScreen extends StatefulWidget {
   const IAScreen({Key? key}) : super(key: key);
@@ -12,8 +13,48 @@ class IAScreen extends StatefulWidget {
 
 class _IAScreenState extends State<IAScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   List<Map<String, String>> mensajes = [];
   bool cargando = false;
+  String? token;
+
+  @override
+  void initState() {
+    super.initState();
+    initIA();
+  }
+
+  Future<void> initIA() async {
+    token = await SessionService.getToken();
+    await cargarHistorial();
+  }
+
+  Future<void> cargarHistorial() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.3.145.98:3000/ia/historial'),
+        headers: {
+          'Authorization': 'Bearer $token'
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      setState(() {
+        mensajes = [];
+
+        for (var item in data) {
+          mensajes.add({"tipo": "user", "texto": item['mensaje']});
+          mensajes.add({"tipo": "ia", "texto": item['respuesta']});
+        }
+      });
+
+      scrollAbajo();
+    } catch (e) {
+      print("Error historial: $e");
+    }
+  }
 
   Future<void> preguntarIA() async {
     if (_controller.text.isEmpty) return;
@@ -26,10 +67,15 @@ class _IAScreenState extends State<IAScreen> {
       _controller.clear();
     });
 
+    scrollAbajo();
+
     try {
       final response = await http.post(
         Uri.parse('http://10.3.145.98:3000/ia'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
         body: jsonEncode({'pregunta': pregunta}),
       );
 
@@ -38,6 +84,7 @@ class _IAScreenState extends State<IAScreen> {
       setState(() {
         mensajes.add({"tipo": "ia", "texto": data['respuesta']});
       });
+
     } catch (e) {
       setState(() {
         mensajes.add({"tipo": "ia", "texto": "Error conectando con IA"});
@@ -46,6 +93,18 @@ class _IAScreenState extends State<IAScreen> {
 
     setState(() {
       cargando = false;
+    });
+
+    scrollAbajo();
+  }
+
+  void scrollAbajo() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(
+          _scrollController.position.maxScrollExtent,
+        );
+      }
     });
   }
 
@@ -76,12 +135,12 @@ class _IAScreenState extends State<IAScreen> {
             borderRadius: BorderRadius.circular(15),
           ),
           child: MarkdownBody(
-              data: msg["texto"] ?? '',
-              styleSheet: MarkdownStyleSheet(
-              p: TextStyle(fontSize: 14),
-              strong: TextStyle(fontWeight: FontWeight.bold),
-    ),
-)
+            data: msg["texto"] ?? '',
+            styleSheet: MarkdownStyleSheet(
+              p: const TextStyle(fontSize: 14),
+              strong: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
 
         const SizedBox(width: 8),
@@ -103,21 +162,13 @@ class _IAScreenState extends State<IAScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF6B7F66),
         title: const Text("Asistente IA"),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.all(8),
-            child: CircleAvatar(
-             backgroundColor: Colors.grey,
-            child: Icon(Icons.person, color: Colors.white),
-)
-          )
-        ],
       ),
 
       body: Column(
         children: [
           Expanded(
             child: ListView(
+              controller: _scrollController,
               padding: const EdgeInsets.all(10),
               children: [
                 ...mensajes.map(mensajeBubble),
