@@ -143,7 +143,7 @@ class _LotesScreenState extends State<LotesScreen> {
                 child: Column(
                   children: [
                     DropdownButtonFormField<int>(
-                      value: fincaSeleccionada,
+                      initialValue: fincaSeleccionada,
                       hint: const Text("Seleccionar Finca"),
                       isExpanded: true,
                       items: fincas.map<DropdownMenuItem<int>>((finca) {
@@ -332,7 +332,7 @@ class _LotesScreenState extends State<LotesScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  const Text("Mis Lotes",
+                  const Text("Lotes de la Finca",
                       style:
                           TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 15),

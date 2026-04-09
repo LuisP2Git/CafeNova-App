@@ -217,7 +217,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<int>(
-                  value: fincaSeleccionada,
+                  initialValue: fincaSeleccionada,
                   hint: const Text("Seleccionar finca"),
                   items: fincas.map<DropdownMenuItem<int>>((finca) {
                     return DropdownMenuItem(

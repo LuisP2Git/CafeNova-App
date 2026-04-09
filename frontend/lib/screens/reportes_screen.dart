@@ -3,7 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/utils/mensajes.dart';
 import '../services/api_service.dart';
 import '../services/session_service.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'home_screen.dart';
 import 'lotes_screen.dart';
 import 'profile_screen.dart';
 
@@ -35,6 +36,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
     return meses[m] ?? m;
   }
 
+  String formatearFechaCorta(String fecha) {
+  final f = DateTime.parse(fecha);
+  return "${f.day}/${f.month}";
+}
+
   List mensual = [];
   List calidad = [];
   List porFecha = [];
@@ -46,7 +52,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
   DateTime? hasta;
 
   String? token;
-  int _selectedIndex = 2;
+  final int _selectedIndex = 2;
 
   @override
   void initState() {
@@ -159,10 +165,39 @@ class _ReportesScreenState extends State<ReportesScreen> {
             ),
             child: SafeArea(
               child: Row(
-                children: const [
-                  Icon(Icons.bar_chart, color: Colors.white),
-                  SizedBox(width: 10),
-                  Text("Reportes", style: TextStyle(color: Colors.white)),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          final nombre = prefs.getString('nombre') ?? '';
+                          final correo = prefs.getString('correo') ?? '';
+                          final rol = prefs.getString('rol') ?? '';
+
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => HomeScreen(
+                                nombre: nombre,
+                                correo: correo,
+                                rol: rol,
+                              ),
+                            ),
+                            (route) => false,
+                          );
+                        },
+                      ),
+                      const Icon(Icons.bar_chart, color: Colors.white),
+                      const SizedBox(width: 10),
+                      const Text("Cafe Nova",
+                          style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                  const Text("Usuario",
+                      style: TextStyle(color: Colors.white)),
                 ],
               ),
             ),
@@ -334,7 +369,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
                                     if (index < porFecha.length) {
                                       String fecha = porFecha[index]['fecha'];
                                       return Text(
-                                        fecha.substring(5),
+                                        formatearFechaCorta(fecha),
                                         style: const TextStyle(fontSize: 10),
                                       );
                                     }

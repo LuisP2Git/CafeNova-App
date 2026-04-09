@@ -46,6 +46,11 @@ class CultivoScreen extends StatefulWidget {
 
 class _CultivoScreenState extends State<CultivoScreen> {
 
+  String formatearFecha(String fecha) {
+  final f = DateTime.parse(fecha);
+  return "${f.day}/${f.month}/${f.year}";
+}
+
   List lotes = [];
   List cultivos = [];
   List<String> variedadesDisponibles = [];
@@ -190,7 +195,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
                   // ================= LOTE =================
                   DropdownButtonFormField<int>(
                     hint: const Text("Lote"),
-                    value: idLote,
+                    initialValue: idLote,
                     isExpanded: true,
                     items: lotes.map<DropdownMenuItem<int>>((l) {
                       return DropdownMenuItem(
@@ -212,7 +217,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
                   // ================= TIPO =================
                   DropdownButtonFormField<String>(
                     hint: const Text("Tipo de café"),
-                    value: tipoSeleccionado,
+                    initialValue: tipoSeleccionado,
                     isExpanded: true,
                     items: tiposCafe.map((tipo) {
                       return DropdownMenuItem(
@@ -239,7 +244,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
                   DropdownButtonFormField<String>(
                     key: ValueKey(tipoSeleccionado),
                     hint: const Text("Variedad"),
-                    value: variedadesDisponibles.contains(variedadController.text)
+                    initialValue: variedadesDisponibles.contains(variedadController.text)
                         ? variedadController.text
                         : null,
                     isExpanded: true,
@@ -289,7 +294,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
                   // ================= ESTADO =================
                   DropdownButtonFormField<String>(
                     hint: const Text("Estado"),
-                    value: estadoSeleccionado,
+                    initialValue: estadoSeleccionado,
                     isExpanded: true,
                     items: estadosCultivo.map((estado) {
                       return DropdownMenuItem(
@@ -458,8 +463,7 @@ Widget build(BuildContext context) {
                             Text("Lote: ${c['nombre_lote'] ?? '-'}"),
                             Text("Finca: ${c['nombre_finca'] ?? '-'}"),
                             Text("Estado: ${c['estado'] ?? '-'}"),
-                            Text("Siembra: ${c['fecha_siembra'] ?? '-'}"),
-
+                            Text("Siembra: ${c['fecha_siembra'] != null ? formatearFecha(c['fecha_siembra']) : '-'}"),
                           ],
                         ),
                       ),

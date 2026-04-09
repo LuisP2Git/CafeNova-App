@@ -5,7 +5,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:frontend/services/session_service.dart';
 
 class IAScreen extends StatefulWidget {
-  const IAScreen({Key? key}) : super(key: key);
+  const IAScreen({super.key});
 
   @override
   State<IAScreen> createState() => _IAScreenState();
@@ -33,7 +33,7 @@ class _IAScreenState extends State<IAScreen> {
   Future<void> cargarHistorial() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.3.145.98:3000/ia/historial'),
+        Uri.parse('http://localhost:3000/ia/historial'),
         headers: {
           'Authorization': 'Bearer $token'
         },
@@ -71,7 +71,7 @@ class _IAScreenState extends State<IAScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.3.145.98:3000/ia'),
+        Uri.parse('http://localhost:3000/ia'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token'

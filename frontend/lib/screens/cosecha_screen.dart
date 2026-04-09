@@ -19,8 +19,13 @@ class CosechaScreen extends StatefulWidget {
 
 class _CosechaScreenState extends State<CosechaScreen> {
 
+  String formatearFecha(String fecha) {
+  final f = DateTime.parse(fecha);
+  return "${f.day}/${f.month}/${f.year}";
+}
+
   List cosechas = [];
-  List cultivos = []; // ✅ NUEVO
+  List cultivos = [];
 
   final cantidadController = TextEditingController();
   final calidadController = TextEditingController();
@@ -157,7 +162,7 @@ class _CosechaScreenState extends State<CosechaScreen> {
                 // ✅ DROPDOWN CORREGIDO
                 DropdownButtonFormField<int>(
                   hint: const Text("Cultivo"),
-                  value: idCultivo,
+                  initialValue: idCultivo,
                   isExpanded: true,
                   items: cultivos.map<DropdownMenuItem<int>>((c) {
                     return DropdownMenuItem(
@@ -184,7 +189,7 @@ class _CosechaScreenState extends State<CosechaScreen> {
 
 DropdownButtonFormField<String>(
   hint: const Text("Calidad"),
-  value: estadosCalidad.contains(calidadSeleccionada)
+  initialValue: estadosCalidad.contains(calidadSeleccionada)
       ? calidadSeleccionada
       : null,
   isExpanded: true,
@@ -359,7 +364,7 @@ DropdownButtonFormField<String>(
                               const SizedBox(height: 10),
                               Text("Cantidad: ${c['cantidad_kg']} kg"),
                               Text("Calidad: ${c['calidad']}"),
-                              Text("Fecha: ${c['fecha_cosecha']}"),
+                              Text("Fecha: ${c['fecha_cosecha'] != null ? formatearFecha(c['fecha_cosecha']) : '-'}"),
                             ],
                           ),
                         ),

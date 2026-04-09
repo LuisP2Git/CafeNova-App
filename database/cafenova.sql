@@ -187,3 +187,13 @@ CREATE TABLE reporte (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+-- 13. IA mensajes
+CREATE TABLE ia_mensajes (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT,
+    mensaje TEXT,
+    respuesta TEXT,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
