@@ -49,7 +49,7 @@ function soloAdmin(req, res, next) {
 // ===================== AUTH =====================
 
 app.post('/registro', async (req, res) => {
-    const { nombre_usuario, correo, password } = req.body;
+    const { nombre_usuario, correo, password, cargo, telefono, fecha_contratacion, id_finca } = req.body;
 
     if (!nombre_usuario || !correo || !password) {
         return res.status(400).json({ error: 'Datos incompletos' });
@@ -58,15 +58,59 @@ app.post('/registro', async (req, res) => {
     try {
         const hash = await bcrypt.hash(password, 10);
 
-        db.query(
-            `INSERT INTO usuarios (nombre_usuario, correo, password, rol, estado)
-             VALUES (?, ?, ?, 'empleado', 'pendiente')`,
-            [nombre_usuario, correo, hash],
-            (err) => {
-                if (err) return res.status(500).json({ error: err.message });
-                res.json({ mensaje: 'Registro exitoso' });
-            }
-        );
+        db.beginTransaction((err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            // 1. insertar usuario
+            db.query(
+                `INSERT INTO usuarios (nombre_usuario, correo, password, rol, estado)
+                 VALUES (?, ?, ?, 'empleado', 'pendiente')`,
+                [nombre_usuario, correo, hash],
+                (err, result) => {
+                    if (err) {
+                        return db.rollback(() =>
+                            res.status(500).json({ error: err.message })
+                        );
+                    }
+
+                    const id_usuario = result.insertId;
+
+                    // 2. insertar empleado
+                    db.query(
+                        `INSERT INTO empleado 
+                        (id_usuario, nombre, cargo, telefono, fecha_contratacion, id_finca, correo)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            id_usuario,
+                            nombre_usuario,
+                            cargo || 'Sin asignar',
+                            telefono || null,
+                            fecha_contratacion || null,
+                            id_finca || null,
+                            correo
+                        ],
+                        (err2) => {
+                            if (err2) {
+                                return db.rollback(() =>
+                                    res.status(500).json({ error: err2.message })
+                                );
+                            }
+
+                            db.commit((err3) => {
+                                if (err3) {
+                                    return db.rollback(() =>
+                                        res.status(500).json({ error: err3.message })
+                                    );
+                                }
+
+                                res.json({ mensaje: 'Registro exitoso' });
+                            });
+                        }
+                    );
+                }
+            );
+        });
+
     } catch {
         res.status(500).json({ error: 'Error servidor' });
     }
@@ -590,16 +634,17 @@ app.get('/reportes/pdf', verificarToken, adminOEmpleado, (req, res) => {
 app.get('/empleados', verificarToken, (req, res) => {
     db.query(`
         SELECT 
-            e.id_empleado,
-            e.cargo,
-            e.telefono,
-            e.fecha_contratacion,
-            e.id_finca,
-            u.nombre_usuario AS nombre,
-            f.nombre_finca
-        FROM empleado e
-        JOIN usuarios u ON e.id_usuario = u.id_usuario
-        LEFT JOIN finca f ON e.id_finca = f.id_finca
+    e.id_empleado,
+    e.cargo,
+    e.telefono,
+    e.fecha_contratacion,
+    e.id_finca,
+    u.nombre_usuario AS nombre,
+    u.correo,
+    f.nombre_finca
+FROM empleado e
+JOIN usuarios u ON e.id_usuario = u.id_usuario
+LEFT JOIN finca f ON e.id_finca = f.id_finca
         WHERE f.id_admin = ? OR e.id_finca IS NULL
     `, [req.usuario.id_usuario], (err, results) => {
         if (err) {
@@ -677,9 +722,8 @@ app.put('/usuarios/aprobar/:id', verificarToken, soloAdmin, (req, res) => {
 
                     // 3. crear empleado BIEN
                     db.query(
-                        `INSERT INTO empleado (id_usuario, nombre, cargo, telefono)
-                         VALUES (?, ?, 'Sin asignar', '0000000000')`,
-                        [id, nombre],
+  "UPDATE usuarios SET estado = 'activo' WHERE id_usuario = ?",
+  [id],
                         (err3) => {
                             if (err3) {
                                 console.log("ERROR EMPLEADO:", err3);
@@ -742,7 +786,7 @@ Responde claro y práctico.
 
         const respuesta = response.data.choices[0].message.content;
 
-        // 🔥 GUARDAR EN DB
+        // GUARDAR EN DB
         db.query(
             `INSERT INTO ia_mensajes (id_usuario, mensaje, respuesta)
              VALUES (?, ?, ?)`,

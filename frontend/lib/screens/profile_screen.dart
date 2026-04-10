@@ -23,23 +23,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final int _selectedIndex = 3;
 
   Future<void> logout(BuildContext context) async {
-    final url = Uri.parse('http://localhost:3000/logout');
+  final prefs = await SharedPreferences.getInstance();
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+  await prefs.clear();
 
-    try {
-      await http.post(url, headers: {'Authorization': 'Bearer $token'});
-    } catch (e) {}
-    await prefs.clear();
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
-  }
-
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const LoginScreen()),
+    (route) => false,
+  );
+}
   void _onItemTapped(int index) {
   if (index == 0) {
     Navigator.pop(context); // Inicio

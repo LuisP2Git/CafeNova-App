@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/login_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'dart:convert';
@@ -42,9 +43,12 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
     token = await SessionService.getToken();
 
     if (token == null) {
-      Mensajes.mostrar(context, "Sesión inválida", esError: true);
-      return;
-    }
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (_) => const LoginScreen()),
+  );
+  return;
+}
 
     await obtenerEmpleados();
     await obtenerFincas();
@@ -379,6 +383,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                                   Text("Teléfono: ${emp['telefono'] ?? '-'}"),
                                   Text(
                                       "Fecha: ${emp['fecha_contratacion'] != null ? formatearFecha(emp['fecha_contratacion']) : '-'}"),
+                                  Text("Correo: ${emp['correo'] ?? '-'}"),
                                   Text(
                                     emp['nombre_finca'] != null
                                         ? "Finca: ${emp['nombre_finca']}"
@@ -389,6 +394,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                                           : Colors.black,
                                     ),
                                   ),
+                                  
                                 ],
                               ),
                             ),
