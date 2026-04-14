@@ -76,24 +76,24 @@ app.post('/registro', async (req, res) => {
                     const id_usuario = result.insertId;
 
                     // 2. insertar empleado
-db.query(
-    `INSERT INTO empleado 
-    (id_usuario, nombre, cargo, telefono, fecha_contratacion, id_finca)
-    VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-        id_usuario,
-        nombre_usuario,
-        cargo || 'Sin asignar',
-        telefono || null,
-        fecha_contratacion || null,
-        id_finca || null
-    ],
-    (err2) => {
-        if (err2) {
-            return db.rollback(() =>
-                res.status(500).json({ error: err2.message })
-            );
-        }
+                    db.query(
+                        `INSERT INTO empleado 
+                        (id_usuario, nombre, cargo, telefono, fecha_contratacion, id_finca)
+                        VALUES (?, ?, ?, ?, ?, ?)`,
+                        [
+                            id_usuario,
+                            nombre_usuario,
+                            cargo || 'Sin asignar',
+                            telefono || null,
+                            fecha_contratacion || null,
+                            id_finca || null
+                        ],
+                        (err2) => {
+                            if (err2) {
+                                return db.rollback(() =>
+                                    res.status(500).json({ error: err2.message })
+                                );
+                            }
 
         db.commit((err3) => {
             if (err3) {
@@ -579,19 +579,27 @@ app.get('/reportes/pdf', verificarToken, adminOEmpleado, (req, res) => {
     const doc = new PDFDocument({ margin: 40 });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=reporte.pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=reporte_cafenova.pdf');
 
     doc.pipe(res);
 
-    doc.fontSize(20).text('Reporte Cafetera Nova', { align: 'center' });
-    doc.moveDown();
+    // ================= HEADER =================
+    doc
+        .rect(0, 0, doc.page.width, 80)
+        .fill('#6B7F66');
 
-    doc.fontSize(10).text(`Fecha: ${new Date().toLocaleDateString()}`);
-    doc.moveDown();
+    doc
+        .fillColor('white')
+        .fontSize(20)
+        .text('☕ Cafe Nova', 40, 25);
 
-    doc.fontSize(14).text('Producción por Fecha', { underline: true });
-    doc.moveDown();
+    doc
+        .fontSize(10)
+        .text(`Fecha: ${new Date().toLocaleDateString()}`, 400, 30);
 
+    doc.moveDown(3);
+
+    // ================= CONSULTAS =================
     db.query(`
         SELECT DATE(c.fecha_cosecha) AS fecha,
                SUM(c.cantidad_kg) AS total_kg
@@ -612,16 +620,75 @@ app.get('/reportes/pdf', verificarToken, adminOEmpleado, (req, res) => {
 
         let total = 0;
 
-        results.forEach(r => {
-            total += r.total_kg;
-            doc.text(`📅 ${r.fecha}   →   ${r.total_kg} kg`);
+        results.forEach(r => total += r.total_kg);
+
+        // ================= TARJETAS =================
+        const cardY = 120;
+
+        // CARD 1
+        doc
+            .roundedRect(40, cardY, 240, 70, 10)
+            .fill('#F5F1ED');
+
+        doc
+            .fillColor('#333')
+            .fontSize(12)
+            .text('Producción Total', 60, cardY + 15);
+
+        doc
+            .fontSize(18)
+            .fillColor('#6B7F66')
+            .text(`${total} kg`, 60, cardY + 35);
+
+        // ================= TABLA =================
+        let y = 230;
+
+        doc
+            .fillColor('black')
+            .fontSize(14)
+            .text('Producción por Fecha', 40, y);
+
+        y += 25;
+
+        // encabezado
+        doc
+            .rect(40, y, 500, 25)
+            .fill('#6B7F66');
+
+        doc
+            .fillColor('white')
+            .fontSize(10)
+            .text('Fecha', 60, y + 7)
+            .text('Producción (kg)', 300, y + 7);
+
+        y += 25;
+
+        // filas
+        results.forEach((r, i) => {
+            const bg = i % 2 === 0 ? '#FFFFFF' : '#F5F1ED';
+
+            doc
+                .rect(40, y, 500, 25)
+                .fill(bg);
+
+            doc
+                .fillColor('#333')
+                .fontSize(10)
+                .text(r.fecha.toISOString().split('T')[0], 60, y + 7)
+                .text(`${r.total_kg} kg`, 300, y + 7);
+
+            y += 25;
         });
 
+        // ================= FOOTER =================
         doc.moveDown();
 
-        doc.fontSize(14).text(`Total Producción: ${total} kg`, {
-            align: 'right'
-        });
+        doc
+            .fontSize(10)
+            .fillColor('gray')
+            .text('Generado por Cafe Nova', 40, doc.page.height - 50, {
+                align: 'center'
+            });
 
         doc.end();
     });
