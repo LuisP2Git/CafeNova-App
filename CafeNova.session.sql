@@ -1,1 +1,5 @@
-SELECT id_usuario, nombre_usuario, token, rol, estado FROM usuarios;
+UPDATE usuarios 
+SET rol = 'admin', 
+    estado = 'activo' 
+WHERE id_usuario = 1 
+  AND rol != 'admin';

@@ -167,6 +167,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: const Text("Crear cuenta"),
                     ),
                   ),
+
+                  const SizedBox(height: 15),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      "¿Ya tienes cuenta? Inicia sesión",
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
