@@ -55,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
               nombre: data['usuario']['nombre_usuario'],
               correo: data['usuario']['correo'],
               rol: data['usuario']['rol'],
+              mostrarBienvenida: true, // ✅ FIX: solo en login real
             ),
           ),
         );

@@ -15,8 +15,20 @@ const iaRoutes       = require('./routes/ia');
 const app = express();
 
 // ─── Middlewares globales ────────────────────────────────────────────────────
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(express.json({
+  limit: '25mb'
+}));
+
+app.use(express.urlencoded({
+  extended: true,
+  limit: '25mb'
+}));
 
 // ─── Rutas ──────────────────────────────────────────────────────────────────
 app.use('/',          authRoutes);
@@ -24,6 +36,7 @@ app.use('/fincas',    fincasRoutes);
 app.use('/lotes',     lotesRoutes);
 app.use('/cultivo',   cultivosRoutes);
 app.use('/cosecha',   cosechasRoutes);
+app.use('/cosechas', cosechasRoutes);
 app.use('/reportes',  reportesRoutes);
 app.use('/empleados', empleadosRoutes);
 app.use('/usuarios',  usuariosRoutes);

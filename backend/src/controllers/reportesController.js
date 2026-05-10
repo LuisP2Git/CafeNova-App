@@ -174,4 +174,37 @@ function generarPDF(req, res) {
     );
 }
 
-module.exports = { totalCosecha, cosechaMensual, porCalidad, mejorCultivo, porFecha, generarPDF };
+function reportePorFinca(req, res) {
+    db.query(
+        `
+        SELECT
+            f.id_finca,
+            f.nombre_finca,
+            COUNT(c.id_cosecha) AS total_cosechas,
+            SUM(c.cantidad_kg) AS total_kg
+        FROM finca f
+        LEFT JOIN lote l
+            ON l.id_finca = f.id_finca
+        LEFT JOIN cultivo cu
+            ON cu.id_lote = l.id_lote
+        LEFT JOIN cosecha c
+            ON c.id_cultivo = cu.id_cultivo
+        WHERE f.id_admin = ?
+        GROUP BY f.id_finca
+        ORDER BY total_kg DESC
+        `,
+        [req.usuario.id_usuario],
+        (err, results) => {
+            if (err) {
+                console.log(err);
+                return res.status(500).json({
+                    error: err.message
+                });
+            }
+
+            res.json(results);
+        }
+    );
+}
+
+module.exports = {totalCosecha, cosechaMensual, porCalidad, mejorCultivo, porFecha, generarPDF, reportePorFinca};

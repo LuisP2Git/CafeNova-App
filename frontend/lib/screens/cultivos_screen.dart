@@ -1,133 +1,117 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../services/session_service.dart';
+import 'package:frontend/services/session_service.dart';
+import 'package:frontend/screens/reportes_screen.dart';
+import 'package:frontend/screens/profile_screen.dart';
+import 'package:frontend/screens/lotes_screen.dart';
+import 'package:frontend/widgets/app_bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-const estadosCultivo = [
-  "Activo",
-  "En crecimiento",
-  "En floración",
-  "Cosechado",
-  "Inactivo"
-];
-const tiposCafe = [
-  "Arabica",
-  "Robusta",
+// ─── Constantes de dominio ────────────────────────────────────────────────────
+const _estadosCultivo = [
+  'Activo',
+  'En crecimiento',
+  'En floración',
+  'Cosechado',
+  'Inactivo',
 ];
 
-const Map<String, List<String>> variedadesCafeColombia = {
-  "Arabica": [
-    "Castillo",
-    "Colombia",
-    "Cenicafé 1",
-    "Tabi",
-    "Caturra",
-    "Typica",
-    "Bourbon",
-    "Bourbon Rosado",
-    "Bourbon Amarillo",
-    "Geisha",
-    "Maragogipe",
-    "Pacamara",
-    "Laurina"
+const _tiposCafe = ['Arabica', 'Robusta'];
+
+const Map<String, List<String>> _variedadesCafe = {
+  'Arabica': [
+    'Castillo', 'Colombia', 'Cenicafé 1', 'Tabi', 'Caturra',
+    'Typica', 'Bourbon', 'Bourbon Rosado', 'Bourbon Amarillo',
+    'Geisha', 'Maragogipe', 'Pacamara', 'Laurina',
   ],
-  "Robusta": [
-    "Conilon",
-    "Robusta mejorado"
-  ]
+  'Robusta': ['Conilon', 'Robusta mejorado'],
 };
+
 class CultivoScreen extends StatefulWidget {
   const CultivoScreen({super.key});
-  
 
   @override
   State<CultivoScreen> createState() => _CultivoScreenState();
 }
 
 class _CultivoScreenState extends State<CultivoScreen> {
-
-  String formatearFecha(String fecha) {
-  final f = DateTime.parse(fecha);
-  return "${f.day}/${f.month}/${f.year}";
-}
-
   List lotes = [];
   List cultivos = [];
   List<String> variedadesDisponibles = [];
-  
 
-
-  final tipoController = TextEditingController();
   final variedadController = TextEditingController();
   final fechaController = TextEditingController();
 
   int? idLote;
   int? idEditando;
-
   String? token;
-  String? estadoSeleccionado;
+  String correo = '';
+  String nombre = '';
+  String estadoSeleccionado = _estadosCultivo.first;
   String? tipoSeleccionado;
-  
+
+  final int _selectedIndex = 0; // no hay pestaña "Cultivos" — Inicio activo
 
   @override
   void initState() {
     super.initState();
-    initApp();
+    _init();
   }
 
-  Future<void> initApp() async {
+  Future<void> _init() async {
     token = await SessionService.getToken();
+    correo = await SessionService.getCorreo() ?? '';
+    nombre = await SessionService.getNombre() ?? '';
     if (token == null) return;
-    await obtenerLotes();   
-    await obtenerCultivos();
+    await Future.wait([obtenerLotes(), obtenerCultivos()]);
   }
-
-  // ================= GET =================
 
   Future<void> obtenerLotes() async {
-  final response = await http.get(
-    Uri.parse('http://localhost:3000/lotes'),
-    headers: {'Authorization': 'Bearer $token'},
-  );
-
-  if (response.statusCode == 200) {
-    setState(() {
-      lotes = jsonDecode(response.body);
-    });
-  }
-}
-
-  Future<void> obtenerCultivos() async {
-    final response = await http.get(
-      Uri.parse('http://localhost:3000/cultivo'),
+    final res = await http.get(
+      Uri.parse('http://localhost:3000/lotes'),
       headers: {'Authorization': 'Bearer $token'},
     );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        cultivos = jsonDecode(response.body);
-      });
+    if (res.statusCode == 200) {
+      setState(() => lotes = jsonDecode(res.body));
     }
   }
 
-  // ================= GUARDAR =================
-  Future<void> guardarCultivo() async {
+  Future<void> obtenerCultivos() async {
+    final res = await http.get(
+      Uri.parse('http://localhost:3000/cultivo'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode == 200) {
+      setState(() => cultivos = jsonDecode(res.body));
+    }
+  }
 
-    if (idLote == null ||
-        tipoController.text.isEmpty ||
-        variedadController.text.isEmpty ||
-        fechaController.text.isEmpty ||
-         estadoSeleccionado == null) {
+  Future<void> guardarCultivo() async {
+    if (idLote == null) {
+      _mostrarError('Selecciona un lote');
+      return;
+    }
+    if (tipoSeleccionado == null) {
+      _mostrarError('Selecciona el tipo de café');
+      return;
+    }
+    if (variedadController.text.isEmpty) {
+      _mostrarError('Selecciona la variedad');
+      return;
+    }
+    if (fechaController.text.isEmpty) {
+      _mostrarError('Selecciona la fecha de siembra');
       return;
     }
 
     final url = idEditando == null
         ? 'http://localhost:3000/cultivo'
         : 'http://localhost:3000/cultivo/$idEditando';
-
     final method = idEditando == null ? http.post : http.put;
 
-    final response = await method(
+    final res = await method(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
@@ -135,21 +119,20 @@ class _CultivoScreenState extends State<CultivoScreen> {
       },
       body: jsonEncode({
         'id_lote': idLote,
-        'tipo_cultivo': tipoController.text,
+        'tipo_cultivo': tipoSeleccionado,
         'variedad': variedadController.text,
         'fecha_siembra': fechaController.text,
         'estado': estadoSeleccionado,
       }),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    if (res.statusCode == 200 || res.statusCode == 201) {
       limpiarCampos();
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
       obtenerCultivos();
     }
   }
 
-  // ================= DELETE =================
   Future<void> eliminarCultivo(int id) async {
     await http.delete(
       Uri.parse('http://localhost:3000/cultivo/$id'),
@@ -158,321 +141,402 @@ class _CultivoScreenState extends State<CultivoScreen> {
     obtenerCultivos();
   }
 
-  // ================= FORM =================
-  void mostrarFormulario({Map? cultivo}) {
-
-  if (cultivo == null) {
-    limpiarCampos();
-  } else {
-    idEditando = cultivo['id_cultivo'];
-
-    tipoSeleccionado = cultivo['tipo_cultivo'];
-    tipoController.text = cultivo['tipo_cultivo'];
-
-    variedadesDisponibles =
-        variedadesCafeColombia[tipoSeleccionado] ?? [];
-
-    variedadController.text = cultivo['variedad'];
-    fechaController.text = cultivo['fecha_siembra'];
-    estadoSeleccionado = cultivo['estado'];
-    idLote = cultivo['id_lote'];
-  }
-
-  showDialog(
-    context: context,
-    builder: (_) {
-      return StatefulBuilder(
-        builder: (context, setModalState) {
-
-          return AlertDialog(
-            title: Text(cultivo == null ? "Nuevo Cultivo" : "Editar Cultivo"),
-
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-
-                  // ================= LOTE =================
-                  DropdownButtonFormField<int>(
-                    hint: const Text("Lote"),
-                    initialValue: idLote,
-                    isExpanded: true,
-                    items: lotes.map<DropdownMenuItem<int>>((l) {
-                      return DropdownMenuItem(
-                        value: l['id_lote'],
-                        child: Text(
-                          "${l['nombre_lote']} (${l['nombre_finca']})",
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        idLote = value;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ================= TIPO =================
-                  DropdownButtonFormField<String>(
-                    hint: const Text("Tipo de café"),
-                    initialValue: tipoSeleccionado,
-                    isExpanded: true,
-                    items: tiposCafe.map((tipo) {
-                      return DropdownMenuItem(
-                        value: tipo,
-                        child: Text(tipo),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        tipoSeleccionado = value;
-                        tipoController.text = value!;
-
-                        variedadesDisponibles =
-                            variedadesCafeColombia[value] ?? [];
-
-                        variedadController.clear();
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ================= VARIEDAD =================
-                  DropdownButtonFormField<String>(
-                    key: ValueKey(tipoSeleccionado),
-                    hint: const Text("Variedad"),
-                    initialValue: variedadesDisponibles.contains(variedadController.text)
-                        ? variedadController.text
-                        : null,
-                    isExpanded: true,
-                    items: tipoSeleccionado == null
-                        ? []
-                        : variedadesDisponibles.map((v) {
-                            return DropdownMenuItem(
-                              value: v,
-                              child: Text(v),
-                            );
-                          }).toList(),
-                    onChanged: tipoSeleccionado == null
-                        ? null
-                        : (value) {
-                            setModalState(() {
-                              variedadController.text = value!;
-                            });
-                          },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ================= FECHA =================
-                  TextField(
-                    controller: fechaController,
-                    readOnly: true,
-                    decoration: const InputDecoration(labelText: "Fecha siembra"),
-                    onTap: () async {
-                      DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
-                      );
-
-                      if (picked != null) {
-                        setModalState(() {
-                          fechaController.text =
-                              "${picked.year}-${picked.month}-${picked.day}";
-                        });
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ================= ESTADO =================
-                  DropdownButtonFormField<String>(
-                    hint: const Text("Estado"),
-                    initialValue: estadoSeleccionado,
-                    isExpanded: true,
-                    items: estadosCultivo.map((estado) {
-                      return DropdownMenuItem(
-                        value: estado,
-                        child: Text(estado),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        estadoSeleccionado = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            actions: [
-              TextButton(
-                onPressed: () {
-                  limpiarCampos();
-                  Navigator.pop(context);
-                },
-                child: const Text("Cancelar"),
-              ),
-              ElevatedButton(
-                onPressed: guardarCultivo,
-                child: const Text("Guardar"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
   void limpiarCampos() {
-    tipoController.clear();
     variedadController.clear();
     fechaController.clear();
-    estadoSeleccionado = null;
     tipoSeleccionado = null;
     variedadesDisponibles = [];
+    estadoSeleccionado = _estadosCultivo.first;
     idLote = null;
     idEditando = null;
   }
+
+  void _mostrarError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: Colors.red.shade600,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  String _formatearFecha(String fecha) {
+    try {
+      final f = DateTime.parse(fecha);
+      return '${f.day}/${f.month}/${f.year}';
+    } catch (_) {
+      return fecha;
+    }
+  }
+
+  void mostrarFormulario({Map? cultivo}) {
+    if (cultivo == null) {
+      limpiarCampos();
+    } else {
+      idEditando = cultivo['id_cultivo'];
+      tipoSeleccionado = cultivo['tipo_cultivo'];
+      variedadesDisponibles = _variedadesCafe[tipoSeleccionado] ?? [];
+      variedadController.text = cultivo['variedad'] ?? '';
+      fechaController.text = cultivo['fecha_siembra'] ?? '';
+      estadoSeleccionado = cultivo['estado'] ?? _estadosCultivo.first;
+      idLote = cultivo['id_lote'];
+    }
+
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setD) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            cultivo == null ? 'Nuevo Cultivo' : 'Editar Cultivo',
+            style: const TextStyle(
+                color: Color(0xFF6B7F66), fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Lote ─────────────────────────────────────────────────────
+                DropdownButtonFormField<int>(
+                  value: idLote,
+                  hint: const Text('Seleccionar Lote'),
+                  isExpanded: true,
+                  decoration: _inputDeco('Lote'),
+                  items: lotes.map<DropdownMenuItem<int>>((l) {
+                    return DropdownMenuItem(
+                      value: l['id_lote'] as int,
+                      child: Text('${l['nombre_lote']} (${l['nombre_finca']})'),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setD(() => idLote = v),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Tipo de café ──────────────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: tipoSeleccionado,
+                  hint: const Text('Tipo de café'),
+                  isExpanded: true,
+                  decoration: _inputDeco('Tipo de café'),
+                  items: _tiposCafe
+                      .map((t) =>
+                          DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
+                  onChanged: (v) => setD(() {
+                    tipoSeleccionado = v;
+                    variedadesDisponibles = _variedadesCafe[v] ?? [];
+                    variedadController.clear();
+                  }),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Variedad ──────────────────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  key: ValueKey(tipoSeleccionado),
+                  value: variedadesDisponibles.contains(variedadController.text)
+                      ? variedadController.text
+                      : null,
+                  hint: const Text('Variedad'),
+                  isExpanded: true,
+                  decoration: _inputDeco('Variedad'),
+                  items: variedadesDisponibles
+                      .map((v) =>
+                          DropdownMenuItem(value: v, child: Text(v)))
+                      .toList(),
+                  onChanged: tipoSeleccionado == null
+                      ? null
+                      : (v) => setD(() => variedadController.text = v!),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Fecha siembra ─────────────────────────────────────────────
+                TextField(
+                  controller: fechaController,
+                  readOnly: true,
+                  decoration: _inputDeco('Fecha de siembra').copyWith(
+                    suffixIcon: const Icon(Icons.calendar_month,
+                        color: Color(0xFF6B7F66)),
+                  ),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime.now(),
+                      builder: (ctx, child) => Theme(
+                        data: Theme.of(ctx).copyWith(
+                          colorScheme: const ColorScheme.light(
+                              primary: Color(0xFF6B7F66)),
+                        ),
+                        child: child!,
+                      ),
+                    );
+                    if (picked != null) {
+                      setD(() {
+                        fechaController.text =
+                            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+
+                // ── Estado ────────────────────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: estadoSeleccionado,
+                  isExpanded: true,
+                  decoration: _inputDeco('Estado'),
+                  items: _estadosCultivo
+                      .map((e) =>
+                          DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (v) =>
+                      setD(() => estadoSeleccionado = v ?? _estadosCultivo.first),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                limpiarCampos();
+                Navigator.pop(context);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: guardarCultivo,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B7F66)),
+              child: const Text('Guardar',
+                  style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDeco(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      );
 
   void confirmarEliminacion(int id) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Eliminar"),
-        content: const Text("¿Eliminar este cultivo?"),
+        title: const Text('Eliminar Cultivo'),
+        content: const Text('¿Seguro que deseas eliminar este cultivo?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar')),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               eliminarCultivo(id);
               Navigator.pop(context);
             },
-            child: const Text("Eliminar"),
+            child:
+                const Text('Eliminar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  // ================= UI =================
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xFFF5F1ED),
+  Color _estadoColor(String? estado) {
+    switch (estado) {
+      case 'Activo':
+        return Colors.green;
+      case 'En crecimiento':
+        return Colors.teal;
+      case 'En floración':
+        return Colors.purple;
+      case 'Cosechado':
+        return Colors.amber.shade700;
+      default:
+        return Colors.grey;
+    }
+  }
 
-    floatingActionButton: FloatingActionButton(
-      backgroundColor: const Color(0xFF6B7F66),
-      onPressed: () => mostrarFormulario(),
-      child: const Icon(Icons.add),
-    ),
+  void _onItemTapped(int index) async {
+    if (index == 0) {
+      Navigator.pop(context);
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final n = prefs.getString('nombre') ?? nombre;
+    final c = prefs.getString('correo') ?? correo;
+    if (!mounted) return;
+    if (index == 1) {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)));
+    } else if (index == 2) {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const ReportesScreen()));
+    } else if (index == 3) {
+      Navigator.push(context,
+          MaterialPageRoute(
+              builder: (_) => ProfileScreen(nombre: n, correo: c)));
+    }
+  }
 
-    body: Column(
+  Widget _cultivoCard(Map c) {
+    final estado = c['estado'] ?? '-';
+    final color = _estadoColor(estado);
+
+    return GestureDetector(
+      onTap: () => mostrarFormulario(cultivo: c),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.spa, color: Color(0xFF6B7F66)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${c['tipo_cultivo'] ?? ''} · ${c['variedad'] ?? ''}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+              // Badge de estado
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(estado,
+                    style: TextStyle(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () => confirmarEliminacion(c['id_cultivo']),
+              ),
+            ]),
+            const Divider(height: 12),
+            Row(children: [
+              _infoChip(Icons.eco, c['nombre_lote'] ?? '-'),
+              const SizedBox(width: 12),
+              _infoChip(Icons.park, c['nombre_finca'] ?? '-'),
+            ]),
+            const SizedBox(height: 4),
+            _infoChip(Icons.calendar_today,
+                c['fecha_siembra'] != null
+                    ? _formatearFecha(c['fecha_siembra'])
+                    : '-'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
+        Icon(icon, size: 14, color: const Color(0xFF6B7F66)),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(text,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              overflow: TextOverflow.ellipsis),
+        ),
+      ],
+    );
+  }
 
-        // ================= HEADER =================
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-          decoration: const BoxDecoration(
-            color: Color(0xFF6B7F66),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(25),
-              bottomRight: Radius.circular(25),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F1ED),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+            decoration: const BoxDecoration(
+              color: Color(0xFF6B7F66),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(25),
+                bottomRight: Radius.circular(25),
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: Row(
-              children: [
+            child: SafeArea(
+              child: Row(children: [
                 IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   onPressed: () => Navigator.pop(context),
                 ),
                 const Icon(Icons.spa, color: Colors.white),
                 const SizedBox(width: 10),
-                const Text(
-                  "Cultivos",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
+                const Text('Cultivos',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
+              ]),
             ),
           ),
-        ),
-
-        // ================= LISTA =================
-        Expanded(
-          child: cultivos.isEmpty
-              ? const Center(child: Text("No hay cultivos"))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: cultivos.length,
-                  itemBuilder: (context, i) {
-                    final c = cultivos[i];
-
-                    return GestureDetector(
-                      onTap: () => mostrarFormulario(cultivo: c),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-
-                            Row(
-                              children: [
-                                const Icon(Icons.spa,
-                                    color: Color(0xFF6B7F66)),
-                                const SizedBox(width: 10),
-
-                                Expanded(
-                                  child: Text(
-                                    c['tipo_cultivo'] ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () => confirmarEliminacion(
-                                      c['id_cultivo']),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            Text("Variedad: ${c['variedad'] ?? '-'}"),
-                            Text("Lote: ${c['nombre_lote'] ?? '-'}"),
-                            Text("Finca: ${c['nombre_finca'] ?? '-'}"),
-                            Text("Estado: ${c['estado'] ?? '-'}"),
-                            Text("Siembra: ${c['fecha_siembra'] != null ? formatearFecha(c['fecha_siembra']) : '-'}"),
-                          ],
-                        ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Mis Cultivos',
+                      style: TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  if (cultivos.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Text('No hay cultivos registrados'),
                       ),
-                    );
-                  },
-                ),
-        )
-      ],
-    ),
-  );
-}
+                    )
+                  else
+                    ...cultivos.map((c) => _cultivoCard(c)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF6B7F66),
+        onPressed: () => mostrarFormulario(),
+        child: const Icon(Icons.add),
+      ),
+      // ✅ Barra de navegación global reutilizable
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _selectedIndex,
+        onTabSelected: _onItemTapped,
+      ),
+    );
+  }
 }

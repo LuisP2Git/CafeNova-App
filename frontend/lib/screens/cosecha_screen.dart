@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../services/session_service.dart';
+import 'package:frontend/services/session_service.dart';
+import 'package:frontend/screens/reportes_screen.dart';
+import 'package:frontend/screens/profile_screen.dart';
+import 'package:frontend/screens/lotes_screen.dart';
+import 'package:frontend/widgets/app_bottom_nav.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-const estadosCalidad = [
-  "Premium",
-  "Alta",
-  "Media",
-  "Baja"
-];
+const _calidadesCosecha = ['Premium', 'Alta', 'Media', 'Baja'];
 
 class CosechaScreen extends StatefulWidget {
   const CosechaScreen({super.key});
@@ -18,95 +19,82 @@ class CosechaScreen extends StatefulWidget {
 }
 
 class _CosechaScreenState extends State<CosechaScreen> {
-
-  String formatearFecha(String fecha) {
-  final f = DateTime.parse(fecha);
-  return "${f.day}/${f.month}/${f.year}";
-}
-
   List cosechas = [];
   List cultivos = [];
 
   final cantidadController = TextEditingController();
-  final calidadController = TextEditingController();
   final fechaController = TextEditingController();
 
   DateTime? fechaSeleccionada;
   int? idCultivo;
   int? idEditando;
-
   String? token;
+  String correo = '';
+  String nombre = '';
   String? calidadSeleccionada;
-  String obtenerNombreCultivo(int id) {
-  final cultivo = cultivos.firstWhere(
-    (c) => c['id_cultivo'] == id,
-    orElse: () => null,
-  );
 
-  if (cultivo == null) return "Cultivo $id";
-
-  return "${cultivo['tipo_cultivo']} - ${cultivo['variedad']}";
-}
+  final int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    initApp();
+    _init();
   }
 
-  Future<void> initApp() async {
+  Future<void> _init() async {
     token = await SessionService.getToken();
+    correo = await SessionService.getCorreo() ?? '';
+    nombre = await SessionService.getNombre() ?? '';
     if (token == null) return;
-
-    await obtenerCultivos(); // ✅ NUEVO
-    await obtenerCosechas();
+    await Future.wait([obtenerCultivos(), obtenerCosechas()]);
   }
 
-  // ================= GET CULTIVOS =================
   Future<void> obtenerCultivos() async {
-    final response = await http.get(
+    final res = await http.get(
       Uri.parse('http://localhost:3000/cultivo'),
       headers: {'Authorization': 'Bearer $token'},
     );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        cultivos = jsonDecode(response.body);
-      });
+    if (res.statusCode == 200) {
+      setState(() => cultivos = jsonDecode(res.body));
     }
   }
 
-  // ================= GET COSECHAS =================
   Future<void> obtenerCosechas() async {
-    final response = await http.get(
+    final res = await http.get(
       Uri.parse('http://localhost:3000/cosecha'),
       headers: {'Authorization': 'Bearer $token'},
     );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        cosechas = jsonDecode(response.body);
-      });
+    if (res.statusCode == 200) {
+      setState(() => cosechas = jsonDecode(res.body));
     }
   }
 
-  // ================= GUARDAR =================
   Future<void> guardarCosecha() async {
-
-    if (idCultivo == null ||
-        cantidadController.text.isEmpty ||
-        calidadSeleccionada == null ||
-        fechaController.text.isEmpty) {
+    if (idCultivo == null) {
+      _mostrarError('Selecciona un cultivo');
+      return;
+    }
+    // ✅ Validación numérica de cantidad
+    final cantText = cantidadController.text.trim();
+    if (cantText.isEmpty || double.tryParse(cantText) == null) {
+      _mostrarError('La cantidad debe ser un número válido (ej: 25.5)');
+      return;
+    }
+    if (calidadSeleccionada == null) {
+      _mostrarError('Selecciona la calidad');
+      return;
+    }
+    if (fechaController.text.isEmpty) {
+      _mostrarError('Selecciona la fecha de cosecha');
       return;
     }
 
     final url = idEditando == null
         ? 'http://localhost:3000/cosecha'
         : 'http://localhost:3000/cosecha/$idEditando';
-
     final method = idEditando == null ? http.post : http.put;
 
-    final response = await method(
+    final res = await method(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
@@ -115,113 +103,159 @@ class _CosechaScreenState extends State<CosechaScreen> {
       body: jsonEncode({
         'id_cultivo': idCultivo,
         'fecha_cosecha': fechaController.text,
-        'cantidad_kg': double.parse(cantidadController.text),
+        'cantidad_kg': double.parse(cantText),
         'calidad': calidadSeleccionada,
       }),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    if (res.statusCode == 200 || res.statusCode == 201) {
       limpiarCampos();
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
       obtenerCosechas();
     }
   }
 
-  // ================= DELETE =================
   Future<void> eliminarCosecha(int id) async {
     await http.delete(
       Uri.parse('http://localhost:3000/cosecha/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
-
     obtenerCosechas();
   }
 
-  // ================= FORM =================
-  void mostrarFormulario({Map? cosecha}) {
+  void limpiarCampos() {
+    cantidadController.clear();
+    fechaController.clear();
+    idCultivo = null;
+    fechaSeleccionada = null;
+    calidadSeleccionada = null;
+    idEditando = null;
+  }
 
+  void _mostrarError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: Colors.red.shade600,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  String _formatearFecha(String fecha) {
+    try {
+      final f = DateTime.parse(fecha);
+      return '${f.day}/${f.month}/${f.year}';
+    } catch (_) {
+      return fecha;
+    }
+  }
+
+  String _nombreCultivo(int id) {
+    try {
+      final c = cultivos.firstWhere((c) => c['id_cultivo'] == id);
+      return '${c['tipo_cultivo']} · ${c['variedad']}';
+    } catch (_) {
+      return 'Cultivo $id';
+    }
+  }
+
+  void mostrarFormulario({Map? cosecha}) {
     if (cosecha == null) {
       limpiarCampos();
     } else {
       idEditando = cosecha['id_cosecha'];
       cantidadController.text = cosecha['cantidad_kg'].toString();
-      calidadSeleccionada = cosecha['calidad'];
-      fechaController.text = cosecha['fecha_cosecha'];
+      calidadSeleccionada = _calidadesCosecha.contains(cosecha['calidad'])
+          ? cosecha['calidad']
+          : null;
+      fechaController.text = cosecha['fecha_cosecha'] ?? '';
       idCultivo = cosecha['id_cultivo'];
     }
 
     showDialog(
       context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: Text(cosecha == null ? "Nueva Cosecha" : "Editar Cosecha"),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setD) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            cosecha == null ? 'Nueva Cosecha' : 'Editar Cosecha',
+            style: const TextStyle(
+                color: Color(0xFF6B7F66), fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-
-                // ✅ DROPDOWN CORREGIDO
+                // ── Cultivo ───────────────────────────────────────────────────
                 DropdownButtonFormField<int>(
-                  hint: const Text("Cultivo"),
-                  initialValue: idCultivo,
+                  value: idCultivo,
+                  hint: const Text('Seleccionar Cultivo'),
                   isExpanded: true,
+                  decoration: _inputDeco('Cultivo'),
                   items: cultivos.map<DropdownMenuItem<int>>((c) {
                     return DropdownMenuItem(
-                      value: c['id_cultivo'],
+                      value: c['id_cultivo'] as int,
                       child: Text(
-                        "${c['tipo_cultivo']} - ${c['variedad']}",
-                      ),
+                          '${c['tipo_cultivo']} · ${c['variedad']}'),
                     );
                   }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      idCultivo = value;
-                    });
-                  },
+                  onChanged: (v) => setD(() => idCultivo = v),
                 ),
+                const SizedBox(height: 12),
 
+                // ── Cantidad ✅ solo números ───────────────────────────────────
                 TextField(
                   controller: cantidadController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: "Cantidad (kg)"),
+                  decoration: _inputDeco('Cantidad (kg)'),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
                 ),
+                const SizedBox(height: 12),
 
-                const SizedBox(height: 10),
+                // ── Calidad ───────────────────────────────────────────────────
+                DropdownButtonFormField<String>(
+                  value: calidadSeleccionada,
+                  hint: const Text('Calidad'),
+                  isExpanded: true,
+                  decoration: _inputDeco('Calidad'),
+                  items: _calidadesCosecha
+                      .map((c) =>
+                          DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) => setD(() => calidadSeleccionada = v),
+                ),
+                const SizedBox(height: 12),
 
-DropdownButtonFormField<String>(
-  hint: const Text("Calidad"),
-  initialValue: estadosCalidad.contains(calidadSeleccionada)
-      ? calidadSeleccionada
-      : null,
-  isExpanded: true,
-  items: estadosCalidad.map((c) {
-    return DropdownMenuItem(
-      value: c,
-      child: Text(c),
-    );
-  }).toList(),
-  onChanged: (value) {
-    setState(() {
-      calidadSeleccionada = value;
-    });
-  },
-),
-
+                // ── Fecha ─────────────────────────────────────────────────────
                 TextField(
                   controller: fechaController,
                   readOnly: true,
-                  decoration: const InputDecoration(labelText: "Fecha"),
+                  decoration: _inputDeco('Fecha de cosecha').copyWith(
+                    suffixIcon: const Icon(Icons.calendar_month,
+                        color: Color(0xFF6B7F66)),
+                  ),
                   onTap: () async {
-                    DateTime? picked = await showDatePicker(
+                    final picked = await showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
                       firstDate: DateTime(2000),
                       lastDate: DateTime.now(),
+                      builder: (ctx, child) => Theme(
+                        data: Theme.of(ctx).copyWith(
+                          colorScheme: const ColorScheme.light(
+                              primary: Color(0xFF6B7F66)),
+                        ),
+                        child: child!,
+                      ),
                     );
-
                     if (picked != null) {
-                      fechaSeleccionada = picked;
-                      fechaController.text =
-                          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                      setD(() {
+                        fechaSeleccionada = picked;
+                        fechaController.text =
+                            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                      });
                     }
                   },
                 ),
@@ -234,67 +268,176 @@ DropdownButtonFormField<String>(
                 limpiarCampos();
                 Navigator.pop(context);
               },
-              child: const Text("Cancelar"),
+              child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: guardarCosecha,
-              child: const Text("Guardar"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B7F66)),
+              child: const Text('Guardar',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
-  void limpiarCampos() {
-    cantidadController.clear();
-    calidadController.clear();
-    fechaController.clear();
-    idCultivo = null;
-    fechaSeleccionada = null;
-    calidadSeleccionada = null;
-    idEditando = null;
-  }
+  InputDecoration _inputDeco(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      );
 
   void confirmarEliminacion(int id) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Eliminar"),
-        content: const Text("¿Eliminar esta cosecha?"),
+        title: const Text('Eliminar Cosecha'),
+        content: const Text('¿Seguro que deseas eliminar esta cosecha?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar')),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               eliminarCosecha(id);
               Navigator.pop(context);
             },
-            child: const Text("Eliminar"),
+            child:
+                const Text('Eliminar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  // ================= UI =================
+  Color _calidadColor(String? cal) {
+    switch (cal) {
+      case 'Premium':
+        return Colors.purple;
+      case 'Alta':
+        return Colors.green;
+      case 'Media':
+        return Colors.orange;
+      default:
+        return Colors.red;
+    }
+  }
+
+  void _onItemTapped(int index) async {
+    if (index == 0) {
+      Navigator.pop(context);
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final n = prefs.getString('nombre') ?? nombre;
+    final c = prefs.getString('correo') ?? correo;
+    if (!mounted) return;
+    if (index == 1) {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)));
+    } else if (index == 2) {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const ReportesScreen()));
+    } else if (index == 3) {
+      Navigator.push(context,
+          MaterialPageRoute(
+              builder: (_) => ProfileScreen(nombre: n, correo: c)));
+    }
+  }
+
+  Widget _cosechaCard(Map c) {
+    final calidad = c['calidad'];
+    final color = _calidadColor(calidad);
+
+    return GestureDetector(
+      onTap: () => mostrarFormulario(cosecha: c),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.agriculture, color: Color(0xFF6B7F66)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _nombreCultivo(c['id_cultivo']),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+              // Badge de calidad
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(calidad ?? '-',
+                    style: TextStyle(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () => confirmarEliminacion(c['id_cosecha']),
+              ),
+            ]),
+            const Divider(height: 12),
+            Row(children: [
+              _infoChip(Icons.scale, '${c['cantidad_kg'] ?? '-'} kg'),
+              const SizedBox(width: 16),
+              _infoChip(
+                Icons.calendar_today,
+                c['fecha_cosecha'] != null
+                    ? _formatearFecha(c['fecha_cosecha'])
+                    : '-',
+              ),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF6B7F66)),
+        const SizedBox(width: 4),
+        Text(text,
+            style: const TextStyle(fontSize: 13, color: Colors.black87)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF6B7F66),
-        onPressed: () => mostrarFormulario(),
-        child: const Icon(Icons.add),
-      ),
-
       body: Column(
         children: [
-
-          // HEADER
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
@@ -306,73 +449,55 @@ DropdownButtonFormField<String>(
               ),
             ),
             child: SafeArea(
-  child: Row(
-    children: [
-      IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () => Navigator.pop(context),
-      ),
-      const Icon(Icons.agriculture, color: Colors.white),
-      const SizedBox(width: 10),
-      const Text("Cosechas",
-          style: TextStyle(color: Colors.white)),
-    ],
-  ),
-),
+              child: Row(children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const Icon(Icons.agriculture, color: Colors.white),
+                const SizedBox(width: 10),
+                const Text('Cosechas',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
+              ]),
+            ),
           ),
-
           Expanded(
-            child: cosechas.isEmpty
-                ? const Center(child: Text("No hay cosechas"))
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: cosechas.length,
-                    itemBuilder: (context, i) {
-                      final c = cosechas[i];
-
-                      return GestureDetector(
-                        onTap: () => mostrarFormulario(cosecha: c),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(Icons.agriculture,
-                                      color: Color(0xFF6B7F66)),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(obtenerNombreCultivo(c['id_cultivo']),
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    onPressed: () =>
-                                        confirmarEliminacion(c['id_cosecha']),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Text("Cantidad: ${c['cantidad_kg']} kg"),
-                              Text("Calidad: ${c['calidad']}"),
-                              Text("Fecha: ${c['fecha_cosecha'] != null ? formatearFecha(c['fecha_cosecha']) : '-'}"),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          )
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Mis Cosechas',
+                      style: TextStyle(
+                          fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  if (cosechas.isEmpty)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Text('No hay cosechas registradas'),
+                      ),
+                    )
+                  else
+                    ...cosechas.map((c) => _cosechaCard(c)),
+                ],
+              ),
+            ),
+          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF6B7F66),
+        onPressed: () => mostrarFormulario(),
+        child: const Icon(Icons.add),
+      ),
+      // ✅ Barra de navegación global reutilizable
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _selectedIndex,
+        onTabSelected: _onItemTapped,
       ),
     );
   }
