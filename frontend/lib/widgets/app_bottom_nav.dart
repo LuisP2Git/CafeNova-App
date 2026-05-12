@@ -2,15 +2,48 @@ import 'package:flutter/material.dart';
 
 /// Barra de navegación inferior reutilizable de CafeNova.
 ///
-/// Cada pantalla define su propio [onTabSelected] para manejar la navegación,
-/// porque Flutter no tiene un router global configurado y cada pantalla
-/// ya importa las demás directamente.
+/// FIX #5 — La navegación desde cada pantalla debe usar
+/// [Navigator.pushAndRemoveUntil] al ir a Inicio (índice 0)
+/// para limpiar la pila y evitar que al presionar Atrás se
+/// regrese a Reportes en lugar del panel de Inicio.
 ///
-/// Ejemplo de uso:
+/// Ejemplo de uso (implementar en cada pantalla):
 /// ```dart
+/// void _onItemTapped(int index) async {
+///   if (index == _miIndice) return;          // ya estoy aquí
+///   final prefs = await SharedPreferences.getInstance();
+///   final n = prefs.getString('nombre') ?? '';
+///   final c = prefs.getString('correo') ?? '';
+///   final r = prefs.getString('rol')    ?? '';
+///   if (!mounted) return;
+///
+///   switch (index) {
+///     case 0:
+///       // SIEMPRE limpiar la pila al volver a Inicio
+///       Navigator.pushAndRemoveUntil(
+///         context,
+///         MaterialPageRoute(builder: (_) => HomeScreen(nombre: n, correo: c, rol: r)),
+///         (route) => false,
+///       );
+///       break;
+///     case 1:
+///       Navigator.push(context,
+///           MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)));
+///       break;
+///     case 2:
+///       Navigator.push(context,
+///           MaterialPageRoute(builder: (_) => ReportesScreen()));
+///       break;
+///     case 3:
+///       Navigator.push(context,
+///           MaterialPageRoute(builder: (_) => ProfileScreen(nombre: n, correo: c)));
+///       break;
+///   }
+/// }
+///
 /// bottomNavigationBar: AppBottomNav(
-///   currentIndex: 1,            // índice de la pestaña activa
-///   onTabSelected: _onItemTapped, // función de la pantalla
+///   currentIndex: 0,               // índice de la pestaña activa
+///   onTabSelected: _onItemTapped,
 /// ),
 /// ```
 class AppBottomNav extends StatelessWidget {

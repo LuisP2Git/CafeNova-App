@@ -186,7 +186,7 @@ class _LotesScreenState extends State<LotesScreen> {
               children: [
                 // Finca
                 DropdownButtonFormField<int>(
-                  value: fincaSeleccionada,
+                  initialValue: fincaSeleccionada,
                   hint: const Text('Seleccionar Finca'),
                   isExpanded: true,
                   decoration: _inputDeco('Finca'),
@@ -220,7 +220,7 @@ class _LotesScreenState extends State<LotesScreen> {
                 const SizedBox(height: 12),
                 // ✅ Tipo de suelo: dropdown
                 DropdownButtonFormField<String>(
-                  value: tipoSueloSeleccionado,
+                  initialValue: tipoSueloSeleccionado,
                   hint: const Text('Tipo de Suelo'),
                   isExpanded: true,
                   decoration: _inputDeco('Tipo de Suelo'),

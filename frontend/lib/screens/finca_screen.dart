@@ -217,7 +217,7 @@ class _FincasScreenState extends State<FincasScreen> {
                 // Departamento
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  value: departamentoSeleccionado,
+                  initialValue: departamentoSeleccionado,
                   hint: const Text('Departamento'),
                   decoration: _inputDeco('Departamento'),
                   items: departamentos.map<DropdownMenuItem<String>>((dep) {
@@ -241,7 +241,7 @@ class _FincasScreenState extends State<FincasScreen> {
                 // Municipio
                 DropdownButtonFormField<String>(
                   isExpanded: true,
-                  value: municipioSeleccionado,
+                  initialValue: municipioSeleccionado,
                   hint: const Text('Municipio'),
                   decoration: _inputDeco('Municipio'),
                   items: municipios.map<DropdownMenuItem<String>>((mun) {

@@ -197,7 +197,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
               children: [
                 // ── Lote ─────────────────────────────────────────────────────
                 DropdownButtonFormField<int>(
-                  value: idLote,
+                  initialValue: idLote,
                   hint: const Text('Seleccionar Lote'),
                   isExpanded: true,
                   decoration: _inputDeco('Lote'),
@@ -213,7 +213,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
 
                 // ── Tipo de café ──────────────────────────────────────────────
                 DropdownButtonFormField<String>(
-                  value: tipoSeleccionado,
+                  initialValue: tipoSeleccionado,
                   hint: const Text('Tipo de café'),
                   isExpanded: true,
                   decoration: _inputDeco('Tipo de café'),
@@ -232,7 +232,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
                 // ── Variedad ──────────────────────────────────────────────────
                 DropdownButtonFormField<String>(
                   key: ValueKey(tipoSeleccionado),
-                  value: variedadesDisponibles.contains(variedadController.text)
+                  initialValue: variedadesDisponibles.contains(variedadController.text)
                       ? variedadController.text
                       : null,
                   hint: const Text('Variedad'),
@@ -282,7 +282,7 @@ class _CultivoScreenState extends State<CultivoScreen> {
 
                 // ── Estado ────────────────────────────────────────────────────
                 DropdownButtonFormField<String>(
-                  value: estadoSeleccionado,
+                  initialValue: estadoSeleccionado,
                   isExpanded: true,
                   decoration: _inputDeco('Estado'),
                   items: _estadosCultivo

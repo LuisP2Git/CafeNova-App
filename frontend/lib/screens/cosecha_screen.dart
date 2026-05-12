@@ -187,7 +187,7 @@ class _CosechaScreenState extends State<CosechaScreen> {
               children: [
                 // ── Cultivo ───────────────────────────────────────────────────
                 DropdownButtonFormField<int>(
-                  value: idCultivo,
+                  initialValue: idCultivo,
                   hint: const Text('Seleccionar Cultivo'),
                   isExpanded: true,
                   decoration: _inputDeco('Cultivo'),
@@ -216,7 +216,7 @@ class _CosechaScreenState extends State<CosechaScreen> {
 
                 // ── Calidad ───────────────────────────────────────────────────
                 DropdownButtonFormField<String>(
-                  value: calidadSeleccionada,
+                  initialValue: calidadSeleccionada,
                   hint: const Text('Calidad'),
                   isExpanded: true,
                   decoration: _inputDeco('Calidad'),

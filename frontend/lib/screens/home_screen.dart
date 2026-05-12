@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List lotes = [];
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   String? token;
   String correoResuelto = '';
 
