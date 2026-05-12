@@ -165,7 +165,7 @@ Analiza esta imagen de una planta de café y proporciona:
 Responde en español, de forma estructurada, clara y práctica.''';
 
     try {
-      // Intentar con el backend del proyecto
+
       final res = await http.post(
         Uri.parse('http://localhost:3000/ia/imagen'),
         headers: {
@@ -176,20 +176,22 @@ Responde en español, de forma estructurada, clara y práctica.''';
           'imagen_base64': _imagenBase64,
           'mime_type': _imagenMimeType ?? 'image/jpeg',
           'prompt': prompt,
+          'temperature': 0.3,
+          'maxTokens': 4096,
         }),
       );
 
+      final data = jsonDecode(res.body);
+
       if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
 
         setState(() {
           _resultadoImagen =
               data['respuesta'] ??
-              data['result'] ??
               'Análisis completado';
         });
+
       } else {
-        final data = jsonDecode(res.body);
 
         setState(() {
           _resultadoImagen =
@@ -197,8 +199,10 @@ Responde en español, de forma estructurada, clara y práctica.''';
               'Error analizando imagen';
         });
       }
+
     } catch (e) {
-     setState(() {
+
+      setState(() {
         _resultadoImagen =
             'Error conectando con el servidor';
       });
