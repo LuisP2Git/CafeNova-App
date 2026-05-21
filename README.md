@@ -1,14 +1,28 @@
 # ☕ CafeNova-App
 
-Sistema de gestión para cafeterías desarrollado como proyecto académico del SENA, enfocado en la administración de usuarios, empleados, fincas, cultivos, lotes y reportes mediante una aplicación moderna con Flutter y Node.js.
+Sistema de gestión integral para fincas cafeteras desarrollado como proyecto académico del SENA, enfocado en la administración de usuarios, empleados, fincas, cultivos, lotes, cosechas y reportes mediante una aplicación moderna construida con Flutter y Node.js.
 
 ---
 
 # 📖 Descripción
 
-CafeNova-App es una aplicación desarrollada para optimizar la gestión y administración de procesos relacionados con una cafetería o finca cafetera. El sistema permite centralizar información importante como empleados, cultivos, lotes, usuarios y reportes, facilitando el control y seguimiento de la información desde una interfaz moderna e intuitiva.
+CafeNova-App es una aplicación desarrollada para optimizar la gestión y administración de procesos agrícolas relacionados con fincas cafeteras.
+
+El sistema permite centralizar información importante como:
+
+- Usuarios
+- Empleados
+- Fincas
+- Lotes
+- Cultivos
+- Cosechas
+- Reportes
+- Inteligencia Artificial
+
+facilitando el control y seguimiento de la información desde una interfaz moderna e intuitiva.
 
 El proyecto se encuentra dividido en:
+
 - Frontend desarrollado en Flutter.
 - Backend desarrollado con Node.js y Express.
 - Base de datos MySQL.
@@ -19,6 +33,35 @@ El proyecto se encuentra dividido en:
 
 - Carol Sofia Realpe
 - Luis Carlos Latorre Berdugo
+
+---
+
+# 🏗️ Arquitectura del proyecto
+
+CafeNova-App utiliza una arquitectura Full Stack compuesta por:
+
+## Frontend
+Aplicación desarrollada en Flutter compatible con:
+- Android
+- Web
+- Windows
+- Linux
+- macOS
+- iOS
+
+## Backend
+Servidor API REST desarrollado con Node.js y Express encargado de:
+- Procesamiento lógico
+- Manejo de autenticación
+- Gestión de datos
+- Integración IA
+- Comunicación con MySQL
+
+## Base de datos
+Sistema gestor de base de datos MySQL.
+
+## Comunicación
+Frontend y backend se comunican mediante peticiones HTTP utilizando servicios API REST.
 
 ---
 
@@ -35,38 +78,71 @@ El proyecto se encuentra dividido en:
 ## Base de datos
 - MySQL
 
-## Librerías y herramientas
+## Librerías y herramientas Backend
 - dotenv
 - cors
-- nodemon
 - mysql2
+- nodemon
 - express
+
+## Librerías y herramientas Frontend
 - flutter/material
+
+## Herramientas de desarrollo
+- Git
+- GitHub
+- Visual Studio Code
+- Android Studio
+- MySQL Workbench
 
 ---
 
 # 📂 Estructura del proyecto
 
 ```bash
-
 CafeNova-App/
 │
 ├── backend/
-│   ├── node_modules/
+│   │
 │   ├── src/
 │   │   ├── config/
+│   │   │   └── db.js
+│   │   │
 │   │   ├── controllers/
-│   │   ├── models/
-│   │   └── routes/
+│   │   │   ├── authController.js
+│   │   │   ├── cosechasController.js
+│   │   │   ├── cultivosController.js
+│   │   │   ├── empleadosController.js
+│   │   │   ├── fincasController.js
+│   │   │   ├── iaController.js
+│   │   │   ├── lotesController.js
+│   │   │   ├── reportesController.js
+│   │   │   └── usuariosController.js
+│   │   │
+│   │   ├── middleware/
+│   │   │   └── auth.js
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── auth.js
+│   │   │   ├── cosechas.js
+│   │   │   ├── cultivos.js
+│   │   │   ├── empleados.js
+│   │   │   ├── fincas.js
+│   │   │   ├── ia.js
+│   │   │   ├── lotes.js
+│   │   │   ├── reportes.js
+│   │   │   └── usuarios.js
+│   │   │
+│   │   └── app.js
 │   │
-│   ├── app.js
 │   ├── index.js
-│   ├── .env
-│   ├── .gitignore
 │   ├── package.json
-│   └── package-lock.json
+│   ├── package-lock.json
+│   ├── .gitignore
+│   └── .env.example
 │
 ├── frontend/
+│   │
 │   ├── android/
 │   ├── ios/
 │   ├── linux/
@@ -76,14 +152,36 @@ CafeNova-App/
 │   ├── test/
 │   │
 │   ├── lib/
+│   │   │
 │   │   ├── screens/
+│   │   │   ├── IA_screen.dart
+│   │   │   ├── cosecha_screen.dart
+│   │   │   ├── cultivos_screen.dart
+│   │   │   ├── employees_screen.dart
+│   │   │   ├── finca_screen.dart
+│   │   │   ├── home_screen.dart
+│   │   │   ├── login_screen.dart
+│   │   │   ├── lotes_screen.dart
+│   │   │   ├── profile_screen.dart
+│   │   │   ├── register_screen.dart
+│   │   │   ├── reportes_screen.dart
+│   │   │   └── usuarios_pendientes_screen.dart
+│   │   │
 │   │   ├── services/
+│   │   │   ├── api_service.dart
+│   │   │   └── session_service.dart
+│   │   │
 │   │   ├── utils/
+│   │   │   └── mensajes.dart
+│   │   │
+│   │   ├── widgets/
+│   │   │   └── app_bottom_nav.dart
+│   │   │
 │   │   └── main.dart
 │   │
-│   ├── build/
 │   ├── pubspec.yaml
 │   ├── pubspec.lock
+│   ├── analysis_options.yaml
 │   └── README.md
 │
 ├── database/
@@ -105,7 +203,7 @@ Antes de ejecutar el proyecto debes tener instalado lo siguiente:
 ## Frontend
 - Flutter SDK
 - Dart SDK
-- Android Studio o Visual Studio Code con extensiones Flutter
+- Android Studio
 
 ## Backend
 - Node.js
@@ -163,6 +261,12 @@ o
 node index.js
 ```
 
+El backend se ejecutará normalmente en:
+
+```txt
+http://localhost:3000
+```
+
 ---
 
 # 🔹 Frontend
@@ -187,6 +291,22 @@ flutter run
 
 ---
 
+# 🌐 Flutter Web
+
+## Generar compilación web
+
+```bash
+flutter build web
+```
+
+La compilación final se genera en:
+
+```txt
+frontend/build/web
+```
+
+---
+
 # 🗄️ Base de datos
 
 ## Crear la base de datos
@@ -199,24 +319,29 @@ CREATE DATABASE cafenova;
 
 ## Importar el archivo SQL
 
-El archivo se encuentra en:
+El archivo SQL se encuentra en:
 
-```bash
+```txt
 /database/cafenova.sql
 ```
 
-Puedes importarlo desde:
+Puede importarse utilizando:
+
 - MySQL Workbench
 - phpMyAdmin
-- Línea de comandos
+- Línea de comandos MySQL
 
 ---
 
 # 🔐 Variables de entorno
 
-Crear un archivo `.env` dentro de la carpeta backend.
+Crear un archivo `.env` dentro de:
 
-Ejemplo:
+```txt
+/backend/.env
+```
+
+## Ejemplo:
 
 ```env
 PORT=3000
@@ -226,7 +351,21 @@ DB_USER=root
 DB_PASSWORD=tu_contraseña
 DB_NAME=cafenova
 DB_PORT=3306
+
+GEMINI_API_KEY=tu_api_key
 ```
+
+---
+
+## Archivo recomendado
+
+Crear también:
+
+```txt
+/backend/.env.example
+```
+
+---
 
 ## Descripción de variables
 
@@ -238,6 +377,7 @@ DB_PORT=3306
 | DB_PASSWORD | Contraseña de MySQL |
 | DB_NAME | Nombre de la base de datos |
 | DB_PORT | Puerto de MySQL |
+| GEMINI_API_KEY | Clave API para integración IA |
 
 ---
 
@@ -255,60 +395,124 @@ Admin123*
 
 # 📱 Módulos principales
 
-El sistema cuenta con los siguientes módulos:
-
+## Seguridad y autenticación
 - Inicio de sesión
 - Registro de usuarios
+- Middleware de autenticación
+- Manejo de sesiones
+
+## Gestión administrativa
 - Gestión de empleados
-- Gestión de cultivos
-- Gestión de lotes
-- Gestión de fincas
-- Reportes
-- Perfil de usuario
+- Gestión de usuarios
 - Usuarios pendientes
-- Módulo IA
+
+## Gestión agrícola
+- Gestión de fincas
+- Gestión de lotes
+- Gestión de cultivos
+- Gestión de cosechas
+
+## Reportes
+- Reportes administrativos
+- Reportes agrícolas
+
+## Inteligencia Artificial
+- Módulo IA integrado
+- Procesamiento mediante API
 
 ---
 
 # 🚀 Despliegue
 
 ## Frontend
-Plataformas recomendadas:
-- Firebase Hosting
+Plataforma seleccionada:
 - Vercel
-- Netlify
 
 ## Backend
-Plataformas recomendadas:
-- Railway
+Plataforma seleccionada:
 - Render
-- Heroku
 
 ## Base de datos
-- MySQL Server
-- PlanetScale
+Plataforma seleccionada:
+- Railway MySQL
+
+---
+
+# 📌 Justificación del despliegue
+
+## Vercel
+Permite desplegar aplicaciones Flutter Web de forma rápida y automática conectando directamente el repositorio GitHub.
+
+## Render
+Compatible con aplicaciones Node.js y APIs REST permitiendo despliegue automático, logs y variables de entorno.
+
+## Railway
+Permite alojar bases de datos MySQL en la nube para proyectos académicos y pruebas.
+
+---
+
+# 🧪 Pruebas realizadas
+
+- Inicio de sesión
+- Registro de usuarios
+- CRUD de empleados
+- CRUD de cultivos
+- CRUD de lotes
+- CRUD de fincas
+- CRUD de cosechas
+- Generación de reportes
+- Integración backend/frontend
+- Conexión MySQL
+- Consumo API REST
+- Integración IA
 
 ---
 
 # 💡 Recomendaciones
 
 ## Backend
-- No subir la carpeta `node_modules`.
-- Mantener protegido el archivo `.env`.
-- Validar correctamente los datos enviados desde el frontend.
+- No subir `node_modules`
+- No subir `.env`
+- Validar correctamente los datos enviados desde frontend
+- Mantener organizada la estructura de rutas y controladores
 
 ## Frontend
-- Mantener organizada la estructura de pantallas y servicios.
-- Reutilizar widgets y componentes para mejorar mantenimiento.
+- Mantener organizada la estructura de pantallas y servicios
+- Reutilizar widgets y componentes
+- Optimizar consumo de API
 
 ## Base de datos
-- Realizar copias de seguridad periódicas.
-- Mantener relaciones correctamente definidas entre tablas.
+- Realizar copias de seguridad periódicas
+- Mantener relaciones correctamente definidas
+- Usar credenciales seguras
 
 ## GitHub
-- Realizar commits organizados.
-- Documentar cambios importantes.
-- Utilizar ramas para nuevas funcionalidades.
+- Realizar commits organizados
+- Documentar cambios importantes
+- Utilizar ramas para nuevas funcionalidades
+
+---
+
+# ⚠️ Riesgos identificados
+
+| Riesgo | Mitigación |
+|---|---|
+| Error de conexión MySQL | Revisar variables de entorno |
+| Error de build Flutter | Validar SDK y dependencias |
+| API no responde | Revisar logs Render |
+| Variables incorrectas | Revisar `.env` |
+| Error de despliegue | Validar configuración GitHub |
+
+---
+
+# 🔄 Plan de reversa
+
+En caso de fallo durante despliegue:
+
+1. Restaurar versión estable desde GitHub.
+2. Reimportar backup SQL.
+3. Revertir último despliegue.
+4. Revisar logs y corregir errores antes de republicar.
 
 ---
 
@@ -352,13 +556,17 @@ Plataformas recomendadas:
 
 # 📌 Estado del proyecto
 
-🚧 Proyecto en desarrollo y mejora continua.
+🚧 Proyecto académico en desarrollo y mejora continua.
 
 Actualmente el sistema cuenta con:
-- Frontend funcional en Flutter.
-- Backend API REST con Node.js y Express.
-- Integración con base de datos MySQL.
-- Módulos principales implementados.
+
+- Frontend Flutter funcional
+- Backend API REST operativo
+- Base de datos MySQL integrada
+- Arquitectura Full Stack
+- Integración IA
+- Reportes administrativos
+- Gestión agrícola completa
 
 ---
 
