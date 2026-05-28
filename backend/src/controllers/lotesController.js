@@ -2,7 +2,8 @@ const db = require('../config/db');
 
 /** POST /lotes — Crear lote */
 function crearLote(req, res) {
-    const { id_finca, nombre_lote, area, tipo_suelo } = req.body;
+    const { nombre_lote, area, tipo_suelo } = req.body;
+    const id_finca = req.empleado.id_finca;
 
     db.query(
         'INSERT INTO lote (id_finca, nombre_lote, area, tipo_suelo) VALUES (?, ?, ?, ?)',
@@ -20,13 +21,16 @@ function crearLote(req, res) {
 /** GET /lotes — Obtener lotes del usuario autenticado */
 function obtenerLotes(req, res) {
     db.query(
-        `SELECT 
-            l.*, 
-            f.nombre_finca 
-         FROM lote l
-         JOIN finca f ON l.id_finca = f.id_finca
-         WHERE f.id_admin = ?`,
-        [req.usuario.id_usuario],
+    `
+    SELECT 
+        l.*,
+        f.nombre_finca
+    FROM lote l
+    JOIN finca f
+        ON l.id_finca = f.id_finca
+    WHERE l.id_finca = ?
+    `,
+    [req.empleado.id_finca],
         (err, results) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json(results);
@@ -37,13 +41,15 @@ function obtenerLotes(req, res) {
 /** PUT /lotes/:id — Actualizar lote */
 function actualizarLote(req, res) {
     const { id } = req.params;
-    const { id_finca, nombre_lote, area, tipo_suelo } = req.body;
+    const { nombre_lote, area, tipo_suelo } = req.body;
+    const id_finca = req.empleado.id_finca;
 
     db.query(
         `UPDATE lote 
-         SET id_finca = ?, nombre_lote = ?, area = ?, tipo_suelo = ?
-         WHERE id_lote = ?`,
-        [id_finca, nombre_lote, area, tipo_suelo, id],
+         SET nombre_lote = ?, area = ?, tipo_suelo = ?
+         WHERE id_lote = ?
+         AND id_finca = ?`,
+        [nombre_lote, area, tipo_suelo, id, req.empleado.id_finca],
         (err) => {
             if (err) {
                 console.log(err);
@@ -58,7 +64,7 @@ function actualizarLote(req, res) {
 function eliminarLote(req, res) {
     const { id } = req.params;
 
-    db.query('DELETE FROM lote WHERE id_lote = ?', [id], (err) => {
+    db.query('DELETE FROM lote WHERE id_lote = ? AND id_finca = ?', [id, req.empleado.id_finca], (err) => {
         if (err) {
             console.log('ERROR DELETE:', err);
             return res.status(500).json({ error: err.message });
