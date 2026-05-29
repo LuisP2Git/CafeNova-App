@@ -731,7 +731,7 @@ List get _resumenCalidad {
             // Selector Finca
             Expanded(
               child: DropdownButtonFormField<int?>(
-                value: _resumenFincaId,
+                initialValue: _resumenFincaId,
                 decoration: InputDecoration(
                   labelText: 'Finca',
                   labelStyle:
@@ -762,7 +762,7 @@ List get _resumenCalidad {
               // Selector Lote
               Expanded(
                 child: DropdownButtonFormField<int?>(
-                  value: _resumenLoteId,
+                  initialValue: _resumenLoteId,
                   decoration: InputDecoration(
                     labelText: 'Lote',
                     labelStyle:
