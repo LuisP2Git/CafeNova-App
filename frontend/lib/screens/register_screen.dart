@@ -25,6 +25,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   DateTime? fechaSeleccionada;
   int? idFinca;
+  
+  String? cargoSeleccionado;
+
+final List<String> cargos = [
+  'Administrador',
+  'Auxiliar Administrativo',
+  'Operario de Campo',
+  'Fumigador',
+  'Recolector',
+  'Pesador',
+  'Operario de Procesamiento',
+];
 
   Future<void> registrar() async {
     if (!_formKey.currentState!.validate()) return;
@@ -54,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'nombre_usuario': usuarioController.text.trim(),
           'correo': correoController.text.trim(),
           'password': passwordController.text,
-          'cargo': cargoController.text.trim(),
+          'cargo': cargoSeleccionado,
           'telefono': telefonoController.text.trim(),
           'fecha_contratacion':
               "${fechaSeleccionada!.year}-${fechaSeleccionada!.month.toString().padLeft(2, '0')}-${fechaSeleccionada!.day.toString().padLeft(2, '0')}",
@@ -114,7 +126,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   campo(passwordController, "Contraseña", obscure: true),
                   campo(confirmPasswordController, "Confirmar contraseña", obscure: true),
 
-                  campo(cargoController, "Cargo"),
+                  Padding(
+  padding: const EdgeInsets.only(bottom: 12),
+  child: DropdownButtonFormField<String>(
+    value: cargoSeleccionado,
+    decoration: InputDecoration(
+      hintText: "Seleccione un cargo",
+      filled: true,
+      fillColor: Colors.grey.shade200,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    ),
+    items: cargos.map((cargo) {
+      return DropdownMenuItem<String>(
+        value: cargo,
+        child: Text(cargo),
+      );
+    }).toList(),
+    onChanged: (value) {
+      setState(() {
+        cargoSeleccionado = value;
+      });
+    },
+    validator: (value) {
+      if (value == null) {
+        return 'Seleccione un cargo';
+      }
+      return null;
+    },
+  ),
+),
 
                   campo(
                     telefonoController,

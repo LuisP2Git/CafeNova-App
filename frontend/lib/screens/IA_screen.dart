@@ -59,13 +59,24 @@ class _IAScreenState extends State<IAScreen>
         headers: {'Authorization': 'Bearer $token'},
       );
       final data = jsonDecode(res.body);
-      setState(() {
-        mensajes = [];
-        for (var item in data) {
-          mensajes.add({'tipo': 'user', 'texto': item['mensaje']});
-          mensajes.add({'tipo': 'ia', 'texto': item['respuesta']});
-        }
-      });
+
+setState(() {
+  mensajes = [];
+
+  final historial = data['historial'] ?? [];
+
+  for (var item in historial) {
+    mensajes.add({
+      'tipo': 'user',
+      'texto': item['mensaje'],
+    });
+
+    mensajes.add({
+      'tipo': 'ia',
+      'texto': item['respuesta'],
+    });
+  }
+});
       _scrollAbajo();
     } catch (e) {
       debugPrint('Error historial: $e');

@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(
 );
 
 // Modelo Gemini recomendado
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-2.5-flash';
 
 /**
  * =========================================================
