@@ -246,33 +246,25 @@ function reportePorFinca(req, res) {
 function generarPDF(req, res) {
 
     const doc = new PDFDocument({
+        size: 'A4',
         margin: 40
     });
 
-    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+        'Content-Type',
+        'application/pdf'
+    );
 
     res.setHeader(
         'Content-Disposition',
-        'attachment; filename=reporte_cafenova.pdf'
+        'attachment; filename=CafeNova_Reporte.pdf'
     );
 
     doc.pipe(res);
 
-    // Header
-    doc.rect(0, 0, doc.page.width, 80).fill('#6B7F66');
-
-    doc.fillColor('white')
-        .fontSize(20)
-        .text('☕ Cafe Nova', 40, 25);
-
-    doc.fontSize(10)
-        .text(`Fecha: ${new Date().toLocaleDateString()}`, 400, 30);
-
-    doc.moveDown(3);
-
     db.query(
         `
-        SELECT 
+        SELECT
             DATE(c.fecha_cosecha) AS fecha,
             SUM(c.cantidad_kg) AS total_kg
         FROM cosecha c
@@ -289,83 +281,298 @@ function generarPDF(req, res) {
 
             if (err) {
 
-                doc.text('Error generando reporte');
+                doc.fontSize(16)
+                   .text('Error generando reporte');
+
                 doc.end();
 
                 return;
             }
 
-            let total = 0;
+            let totalKg = 0;
 
             results.forEach(r => {
-                total += r.total_kg;
+                totalKg += Number(r.total_kg || 0);
             });
 
-            // Tarjeta
-            const cardY = 120;
+            // =========================
+            // HEADER
+            // =========================
 
-            doc.roundedRect(40, cardY, 240, 70, 10)
-                .fill('#F5F1ED');
-
-            doc.fillColor('#333')
-                .fontSize(12)
-                .text('Producción Total', 60, cardY + 15);
-
-            doc.fontSize(18)
-                .fillColor('#6B7F66')
-                .text(`${total} kg`, 60, cardY + 35);
-
-            // Tabla
-            let y = 230;
-
-            doc.fillColor('black')
-                .fontSize(14)
-                .text('Producción por Fecha', 40, y);
-
-            y += 25;
-
-            doc.rect(40, y, 500, 25)
-                .fill('#6B7F66');
+            doc.rect(
+                0,
+                0,
+                doc.page.width,
+                110
+            )
+            .fill('#2E7D32');
 
             doc.fillColor('white')
-                .fontSize(10)
-                .text('Fecha', 60, y + 7)
-                .text('Producción (kg)', 300, y + 7);
+                .fontSize(28)
+                .font('Helvetica-Bold')
+                .text(
+                    'CafeNova',
+                    40,
+                    25
+                );
 
-            y += 25;
+            doc.fontSize(12)
+                .font('Helvetica')
+                .text(
+                    'Sistema Inteligente de Gestión Cafetera',
+                    40,
+                    60
+                );
 
-            results.forEach((r, i) => {
+            doc.text(
+                `Fecha: ${new Date().toLocaleDateString()}`,
+                400,
+                35
+            );
 
-                const bg = i % 2 === 0
-                    ? '#FFFFFF'
-                    : '#F5F1ED';
+            // =========================
+            // TITULO
+            // =========================
 
-                doc.rect(40, y, 500, 25)
-                    .fill(bg);
+            let y = 140;
+
+            doc.fillColor('#222')
+                .fontSize(22)
+                .font('Helvetica-Bold')
+                .text(
+                    'Reporte General de Producción',
+                    40,
+                    y
+                );
+
+            y += 40;
+
+            // =========================
+            // RESUMEN EJECUTIVO
+            // =========================
+
+            doc.roundedRect(
+                40,
+                y,
+                515,
+                80,
+                10
+            )
+            .fill('#F5F8F5');
+
+            doc.fillColor('#2E7D32')
+                .fontSize(14)
+                .font('Helvetica-Bold')
+                .text(
+                    'Resumen Ejecutivo',
+                    55,
+                    y + 15
+                );
+
+            doc.fillColor('#333')
+                .fontSize(11)
+                .font('Helvetica')
+                .text(
+                    `La finca registró una producción acumulada de ${totalKg.toFixed(2)} kg de café durante el período evaluado.`,
+                    55,
+                    y + 40,
+                    {
+                        width: 450
+                    }
+                );
+
+            y += 110;
+
+            // =========================
+            // KPI PRODUCCION
+            // =========================
+
+            doc.roundedRect(
+                40,
+                y,
+                240,
+                90,
+                12
+            )
+            .fill('#E8F5E9');
+
+            doc.fillColor('#2E7D32')
+                .fontSize(13)
+                .font('Helvetica-Bold')
+                .text(
+                    'Producción Total',
+                    60,
+                    y + 18
+                );
+
+            doc.fillColor('#1B5E20')
+                .fontSize(24)
+                .font('Helvetica-Bold')
+                .text(
+                    `${totalKg.toFixed(2)} kg`,
+                    60,
+                    y + 42
+                );
+
+            doc.roundedRect(
+                315,
+                y,
+                240,
+                90,
+                12
+            )
+            .fill('#FFF8E1');
+
+            doc.fillColor('#EF6C00')
+                .fontSize(13)
+                .font('Helvetica-Bold')
+                .text(
+                    'Registros Analizados',
+                    335,
+                    y + 18
+                );
+
+            doc.fillColor('#E65100')
+                .fontSize(24)
+                .font('Helvetica-Bold')
+                .text(
+                    `${results.length}`,
+                    335,
+                    y + 42
+                );
+
+            y += 125;
+
+            // =========================
+            // TABLA
+            // =========================
+
+            doc.fillColor('#222')
+                .fontSize(16)
+                .font('Helvetica-Bold')
+                .text(
+                    'Producción por Fecha',
+                    40,
+                    y
+                );
+
+            y += 30;
+
+            doc.rect(
+                40,
+                y,
+                515,
+                30
+            )
+            .fill('#2E7D32');
+
+            doc.fillColor('white')
+                .fontSize(11)
+                .font('Helvetica-Bold')
+                .text(
+                    'Fecha',
+                    60,
+                    y + 9
+                );
+
+            doc.text(
+                'Producción (kg)',
+                320,
+                y + 9
+            );
+
+            y += 30;
+
+            results.forEach((item, index) => {
+
+                const color =
+                    index % 2 === 0
+                        ? '#FFFFFF'
+                        : '#F5F8F5';
+
+                doc.rect(
+                    40,
+                    y,
+                    515,
+                    28
+                )
+                .fill(color);
 
                 doc.fillColor('#333')
                     .fontSize(10)
+                    .font('Helvetica')
                     .text(
-                        r.fecha.toISOString().split('T')[0],
+                        item.fecha
+                            .toISOString()
+                            .split('T')[0],
                         60,
-                        y + 7
-                    )
-                    .text(`${r.total_kg} kg`, 300, y + 7);
+                        y + 8
+                    );
 
-                y += 25;
+                doc.text(
+                    `${item.total_kg} kg`,
+                    320,
+                    y + 8
+                );
+
+                y += 28;
+
+                if (y > 700) {
+
+                    doc.addPage();
+
+                    y = 60;
+                }
             });
 
-            // Footer
-            doc.moveDown();
+            // =========================
+            // RESUMEN FINAL
+            // =========================
 
-            doc.fontSize(10)
-                .fillColor('gray')
+            y += 20;
+
+            doc.roundedRect(
+                40,
+                y,
+                515,
+                70,
+                10
+            )
+            .fill('#E8F5E9');
+
+            doc.fillColor('#1B5E20')
+                .fontSize(15)
+                .font('Helvetica-Bold')
                 .text(
-                    'Generado por Cafe Nova',
-                    40,
-                    doc.page.height - 50,
-                    { align: 'center' }
+                    `Producción acumulada: ${totalKg.toFixed(2)} kg`,
+                    60,
+                    y + 25
                 );
+
+            // =========================
+            // FOOTER
+            // =========================
+
+            doc.fillColor('#888')
+                .fontSize(9)
+                .font('Helvetica')
+                .text(
+                    'Reporte generado automáticamente por CafeNova',
+                    0,
+                    doc.page.height - 45,
+                    {
+                        align: 'center'
+                    }
+                );
+
+            doc.text(
+                'Sistema Inteligente de Gestión Cafetera',
+                0,
+                doc.page.height - 30,
+                {
+                    align: 'center'
+                }
+            );
 
             doc.end();
         }

@@ -51,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
           
         );
 
+        // ignore: unused_local_variable
         final cargo = data['usuario']['cargo'] ?? '';
 
         Mensajes.mostrar(context, 'Login exitoso');

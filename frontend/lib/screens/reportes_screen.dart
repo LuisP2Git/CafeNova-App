@@ -402,7 +402,7 @@ List get _resumenCalidad {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-              builder: (_) => HomeScreen(nombre: n, correo: c, rol: r)),
+              builder: (_) => HomeScreen(nombre: n, correo: c, rol: r, cargo: prefs.getString('cargo') ?? '',)),
           (route) => false,
         );
         break;
@@ -490,6 +490,7 @@ List get _resumenCalidad {
                         nombre: prefs.getString('nombre') ?? nombre,
                         correo: prefs.getString('correo') ?? correo,
                         rol: prefs.getString('rol') ?? rol,
+                        cargo: prefs.getString('cargo') ?? '',
                       ),
                     ),
                     (route) => false,

@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/screens/finca_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
+import 'package:frontend/screens/inventario_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/utils/mensajes.dart';
 import 'package:frontend/services/session_service.dart';
@@ -223,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (widget.rol == 'admin')
                         _dashCard('Empleados', Icons.people, irAEmpleados),
                       if (cargo == 'Auxiliar Administrativo')
-                        _dashCard('Inventario', Icons.inventory, () {}),
+                        _dashCard('Inventario', Icons.inventory, () {Navigator.push(context, MaterialPageRoute(builder: (_) =>const InventarioScreen(),),);},),
                       if (cargo == 'Operario de Campo')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (cargo == 'Operario de Campo')

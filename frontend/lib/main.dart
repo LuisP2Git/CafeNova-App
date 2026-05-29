@@ -13,6 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+      title: 'CafeNova',
       debugShowCheckedModeBanner: false,
       home: AuthCheck(),
     );
@@ -50,6 +51,7 @@ class _AuthCheckState extends State<AuthCheck> {
             nombre: nombre,
             correo: correo,
             rol: rol,
+            cargo: prefs.getString('cargo') ?? '',
           ),
         ),
       );
