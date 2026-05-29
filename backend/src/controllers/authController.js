@@ -19,6 +19,12 @@ async function registro(req, res) {
         id_finca
     } = req.body;
 
+    let fincaAsignada = id_finca;
+
+if (cargo === 'Administrador') {
+    fincaAsignada = null;
+}
+
     const rolesPermitidos = Object.values(ROLES);
 
     if (cargo && !rolesPermitidos.includes(cargo)) {
@@ -90,12 +96,14 @@ async function registro(req, res) {
                         VALUES (?, ?, ?, ?, ?, ?)
                         `,
                         [
+                            [
                             id_usuario,
                             nombre_usuario,
                             cargo || 'Sin asignar',
                             telefono || null,
                             fecha_contratacion || null,
-                            id_finca || null
+                            fincaAsignada
+]
                         ],
                         (err2, resultEmpleado) => {
 

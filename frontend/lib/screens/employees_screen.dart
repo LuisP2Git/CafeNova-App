@@ -190,6 +190,10 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
                   ),
                   items: const [
                     DropdownMenuItem(
+                      value: 'Administrador',
+                      child: Text('Administrador'),
+),
+                    DropdownMenuItem(
                       value: 'Auxiliar Administrativo',
                       child: Text('Auxiliar Administrativo'),
                     ),

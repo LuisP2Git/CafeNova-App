@@ -4,31 +4,54 @@ const db = require('../config/db');
 /** GET /reportes/total-cosecha */
 function totalCosecha(req, res) {
 
-    db.query(
-        `
-        SELECT 
-            SUM(c.cantidad_kg) AS total_kg
-        FROM cosecha c
-        JOIN cultivo cu
-            ON c.id_cultivo = cu.id_cultivo
-        JOIN lote l
-            ON cu.id_lote = l.id_lote
-        WHERE l.id_finca = ?
-        `,
-        [req.empleado.id_finca],
-        (err, result) => {
+    let query;
+    let params;
 
-            if (err) {
-                return res.status(500).json({
-                    error: err.message
-                });
-            }
+    if (req.empleado.cargo === 'Administrador') {
 
-            res.json(result[0] || {
-                total_kg: 0
+        query = `
+            SELECT
+                SUM(c.cantidad_kg) AS total_kg
+            FROM cosecha c
+            JOIN cultivo cu
+                ON c.id_cultivo = cu.id_cultivo
+            JOIN lote l
+                ON cu.id_lote = l.id_lote
+            JOIN finca f
+                ON l.id_finca = f.id_finca
+            WHERE f.id_admin = ?
+        `;
+
+        params = [req.usuario.id_usuario];
+
+    } else {
+
+        query = `
+            SELECT
+                SUM(c.cantidad_kg) AS total_kg
+            FROM cosecha c
+            JOIN cultivo cu
+                ON c.id_cultivo = cu.id_cultivo
+            JOIN lote l
+                ON cu.id_lote = l.id_lote
+            WHERE l.id_finca = ?
+        `;
+
+        params = [req.empleado.id_finca];
+    }
+
+    db.query(query, params, (err, result) => {
+
+        if (err) {
+            return res.status(500).json({
+                error: err.message
             });
         }
-    );
+
+        res.json(result[0] || {
+            total_kg: 0
+        });
+    });
 }
 
 /** GET /reportes/cosecha-mensual */

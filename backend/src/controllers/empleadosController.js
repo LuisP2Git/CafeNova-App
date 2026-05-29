@@ -50,7 +50,54 @@ function actualizarEmpleado(req, res) {
         id_finca
     } = req.body;
 
-    // Verificar que la finca pertenezca al admin
+    let fincaFinal = id_finca;
+
+    // Los administradores no tienen finca asignada
+    if (cargo === 'Administrador') {
+        fincaFinal = null;
+    }
+
+    // Si es administrador, actualizar directamente
+    if (cargo === 'Administrador') {
+
+        return db.query(
+            `
+            UPDATE empleado
+            SET
+                cargo = ?,
+                telefono = ?,
+                fecha_contratacion = ?,
+                id_finca = NULL
+            WHERE id_empleado = ?
+            `,
+            [
+                cargo,
+                telefono,
+                fecha_contratacion,
+                id
+            ],
+            (err, result) => {
+
+                if (err) {
+                    return res.status(500).json({
+                        error: err.message
+                    });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({
+                        error: 'Empleado no encontrado'
+                    });
+                }
+
+                res.json({
+                    message: 'Empleado actualizado correctamente'
+                });
+            }
+        );
+    }
+
+    // Verificar finca para empleados normales
     db.query(
         `
         SELECT *
@@ -58,7 +105,7 @@ function actualizarEmpleado(req, res) {
         WHERE id_finca = ?
         AND id_admin = ?
         `,
-        [id_finca, req.usuario.id_usuario],
+        [fincaFinal, req.usuario.id_usuario],
         (err, fincaResult) => {
 
             if (err) {
@@ -87,7 +134,7 @@ function actualizarEmpleado(req, res) {
                     cargo,
                     telefono,
                     fecha_contratacion,
-                    id_finca,
+                    fincaFinal,
                     id
                 ],
                 (err, result) => {

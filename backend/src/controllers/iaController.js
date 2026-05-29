@@ -6,14 +6,8 @@ const genAI = new GoogleGenerativeAI(
     process.env.GEMINI_API_KEY
 );
 
-// Modelo Gemini recomendado
 const MODEL_NAME = 'gemini-2.5-flash';
 
-/**
- * =========================================================
- * CHAT IA
- * =========================================================
- */
 async function preguntarIA(req, res) {
 
     try {
@@ -137,11 +131,6 @@ Debes responder:
     }
 }
 
-/**
- * =========================================================
- * HISTORIAL IA
- * =========================================================
- */
 function historialIA(req, res) {
 
     try {
@@ -188,11 +177,6 @@ function historialIA(req, res) {
     }
 }
 
-/**
- * =========================================================
- * ANALIZAR IMAGEN CON GEMINI VISION
- * =========================================================
- */
 async function analizarImagenIA(req, res) {
 
     try {
