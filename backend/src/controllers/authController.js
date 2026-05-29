@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const db     = require('../config/db');
+const ROLES = require('../constants/roles');
 
 /**
  * POST /registro
@@ -8,6 +9,14 @@ const db     = require('../config/db');
  */
 async function registro(req, res) {
     const { nombre_usuario, correo, password, cargo, telefono, fecha_contratacion, id_finca } = req.body;
+
+    const rolesPermitidos = Object.values(ROLES);
+
+    if (cargo && !rolesPermitidos.includes(cargo)) {
+        return res.status(400).json({
+            error: 'Cargo inválido'
+        });
+    }
 
     if (!nombre_usuario || !correo || !password) {
         return res.status(400).json({ error: 'Datos incompletos' });
@@ -80,7 +89,7 @@ async function login(req, res) {
     const { identificador, password } = req.body;
 
     db.query(
-        'SELECT * FROM usuarios WHERE nombre_usuario = ? OR correo = ?',
+        `SELECT u.*, e.cargo, e.id_finca, e.id_empleado FROM usuarios u LEFT JOIN empleado e ON u.id_usuario = e.id_usuario WHERE u.nombre_usuario = ?OR u.correo = ?`,
         [identificador, identificador],
         async (err, result) => {
             if (err)               return res.status(500).json({ error: err.message });
