@@ -15,6 +15,20 @@ class _UsuariosPendientesScreenState
     extends State<UsuariosPendientesScreen> {
 
   List usuarios = [];
+  List fincas = [];
+
+  int? fincaSeleccionada;
+  String? cargoSeleccionado;
+
+  final List<String> cargos = [
+    'Auxiliar Administrativo',
+    'Operario de Campo',
+    'Fumigador',
+    'Recolector',
+    'Pesador',
+    'Operario de Procesamiento',
+  ];
+
   bool cargando = true;
 
   String? token;

@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
   final String nombre;
   final String correo;
   final String rol;
-  // ✅ FIX: flag para controlar si mostrar el mensaje de bienvenida
+  final String cargo;
   final bool mostrarBienvenida;
 
   const HomeScreen({
@@ -26,8 +26,9 @@ class HomeScreen extends StatefulWidget {
     required this.nombre,
     required this.correo,
     required this.rol,
-    this.mostrarBienvenida = false, // false por defecto → no muestra al navegar de vuelta
-  });
+    required this.cargo,
+    this.mostrarBienvenida = false,
+});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -146,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final Color rolColor = widget.rol == 'admin' ? Colors.green : Colors.blue;
+    final cargo = widget.cargo;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
@@ -220,10 +222,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       _dashCard('Lotes', Icons.eco, irALotes),
                       if (widget.rol == 'admin')
                         _dashCard('Empleados', Icons.people, irAEmpleados),
-                      _dashCard('Reportes', Icons.bar_chart, irAReportes),
-                      _dashCard('Cultivos', Icons.spa, irACultivos),
-                      _dashCard('Cosechas', Icons.agriculture, irACosechas),
-                      _dashCard('IA', Icons.psychology, irAIA),
+                      if (cargo == 'Auxiliar Administrativo')
+                        _dashCard('Inventario', Icons.inventory, () {}),
+                      if (cargo == 'Operario de Campo')
+                        _dashCard('Cultivos', Icons.spa, irACultivos),
+                      if (cargo == 'Operario de Campo')
+                        _dashCard('Lotes', Icons.eco, irALotes),
+                      if (cargo == 'Fumigador')
+                        _dashCard('Cultivos', Icons.spa, irACultivos),
+                      if (cargo == 'Fumigador')
+                        _dashCard('Lotes', Icons.eco, irALotes),
+                      if (cargo == 'Fumigador')
+                        _dashCard('Reportes', Icons.bar_chart, irAReportes),
+                      if (cargo == 'Recolector')
+                        _dashCard('Cosechas', Icons.agriculture, irACosechas),
+                      if (cargo == 'Recolector')
+                        _dashCard('Lotes', Icons.eco, irALotes),
+                      if (cargo == 'Pesador')
+                        _dashCard('Reportes', Icons.bar_chart, irAReportes),
+                      if (cargo == 'Operario de Procesamiento')
+                        _dashCard('Cultivos', Icons.spa, irACultivos),
+                      if (cargo == 'Operario de Procesamiento')
+                        _dashCard('Reportes', Icons.bar_chart, irAReportes),
+                      if (widget.rol == 'admin')
+                        _dashCard('IA', Icons.psychology, irAIA),
                     ],
                   ),
                   const SizedBox(height: 20),

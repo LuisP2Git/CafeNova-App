@@ -1,18 +1,28 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionService {
+
   static Future<void> guardarSesion({
     required String token,
     required String nombre,
     required String correo,
     required String rol,
+
+    String cargo = '',
+    int idFinca = 0,
+    int idEmpleado = 0,
   }) async {
+
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString('token', token);
     await prefs.setString('nombre', nombre);
-    await prefs.setString('correo', correo); // siempre persiste correo
+    await prefs.setString('correo', correo);
     await prefs.setString('rol', rol);
+
+    await prefs.setString('cargo', cargo);
+    await prefs.setInt('id_finca', idFinca);
+    await prefs.setInt('id_empleado', idEmpleado);
   }
 
   static Future<String?> getToken() async {
@@ -25,7 +35,6 @@ class SessionService {
     return prefs.getString('nombre');
   }
 
-  /// Recupera el email guardado independientemente del método de login
   static Future<String?> getCorreo() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('correo');
@@ -36,14 +45,33 @@ class SessionService {
     return prefs.getString('rol');
   }
 
-  /// Retorna todos los datos de sesión de una vez
-  static Future<Map<String, String>> getDatosSesion() async {
+  static Future<String?> getCargo() async {
     final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('cargo');
+  }
+
+  static Future<int?> getIdFinca() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_finca');
+  }
+
+  static Future<int?> getIdEmpleado() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('id_empleado');
+  }
+
+  static Future<Map<String, dynamic>> getDatosSesion() async {
+
+    final prefs = await SharedPreferences.getInstance();
+
     return {
       'token': prefs.getString('token') ?? '',
       'nombre': prefs.getString('nombre') ?? '',
       'correo': prefs.getString('correo') ?? '',
       'rol': prefs.getString('rol') ?? '',
+      'cargo': prefs.getString('cargo') ?? '',
+      'id_finca': prefs.getInt('id_finca') ?? 0,
+      'id_empleado': prefs.getInt('id_empleado') ?? 0,
     };
   }
 

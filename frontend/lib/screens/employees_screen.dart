@@ -181,9 +181,42 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
           content: SingleChildScrollView(
             child: Column(
               children: [
-                TextField(
-                  controller: cargoController,
-                  decoration: const InputDecoration(labelText: "Cargo"),
+                DropdownButtonFormField<String>(
+                  value: cargoController.text.isEmpty
+                      ? null
+                      : cargoController.text,
+                  decoration: const InputDecoration(
+                    labelText: "Cargo",
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Auxiliar Administrativo',
+                      child: Text('Auxiliar Administrativo'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Operario de Campo',
+                      child: Text('Operario de Campo'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Fumigador',
+                      child: Text('Fumigador'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Recolector',
+                      child: Text('Recolector'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Pesador',
+                      child: Text('Pesador'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Operario de Procesamiento',
+                      child: Text('Operario de Procesamiento'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    cargoController.text = value ?? '';
+                  },
                 ),
                 const SizedBox(height: 10),
                 TextField(

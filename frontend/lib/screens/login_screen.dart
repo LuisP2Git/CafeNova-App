@@ -40,11 +40,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         await SessionService.guardarSesion(
-  token: data['token'],
-  nombre: data['usuario']['nombre_usuario'],
-  correo: data['usuario']['correo'],
-  rol: data['usuario']['rol'],
-);
+          token: data['token'],
+          nombre: data['usuario']['nombre_usuario'],
+          correo: data['usuario']['correo'],
+          rol: data['usuario']['rol'],
+
+          cargo: data['usuario']['cargo'] ?? '',
+          idFinca: data['usuario']['id_finca'] ?? 0,
+          idEmpleado: data['usuario']['id_empleado'] ?? 0,
+          
+        );
+
+        final cargo = data['usuario']['cargo'] ?? '';
 
         Mensajes.mostrar(context, 'Login exitoso');
 
@@ -55,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
               nombre: data['usuario']['nombre_usuario'],
               correo: data['usuario']['correo'],
               rol: data['usuario']['rol'],
+              cargo: data['usuario']['cargo'] ?? '',
               mostrarBienvenida: true, // ✅ FIX: solo en login real
             ),
           ),
