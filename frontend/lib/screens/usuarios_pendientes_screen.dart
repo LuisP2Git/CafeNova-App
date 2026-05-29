@@ -46,6 +46,7 @@ class _UsuariosPendientesScreenState
     if (token == null) return;
 
     await obtenerPendientes();
+    await obtenerFincas();
   }
 
   // ================= API =================
@@ -69,18 +70,45 @@ class _UsuariosPendientesScreenState
     }
   }
 
-  Future<void> aprobarUsuario(int id) async {
-    await http.put(
-      Uri.parse('http://localhost:3000/usuarios/aprobar/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json'
-      },
-      body: jsonEncode({"rol": "empleado"}),
-    );
+  Future<void> obtenerFincas() async {
 
-    obtenerPendientes();
+  final response = await http.get(
+    Uri.parse('http://localhost:3000/fincas'),
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    setState(() {
+      fincas = jsonDecode(response.body);
+    });
   }
+}
+
+  Future<void> aprobarUsuario(
+  int id,
+  String cargo,
+  int idFinca,
+) async {
+
+  await http.put(
+    Uri.parse(
+      'http://localhost:3000/usuarios/aprobar/$id',
+    ),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      "rol": "empleado",
+      "cargo": cargo,
+      "id_finca": idFinca,
+    }),
+  );
+
+  await obtenerPendientes();
+}
 
   Future<void> rechazarUsuario(int id) async {
     await http.delete(
@@ -112,16 +140,117 @@ class _UsuariosPendientesScreenState
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              aprobar
-                  ? aprobarUsuario(id)
-                  : rechazarUsuario(id);
+              if (!aprobar) {
+                rechazarUsuario(id);
+              }
             },
-            child: Text(aprobar ? "Aprobar" : "Rechazar"),
+            child: Text(
+              aprobar ? "Aprobar" : "Rechazar",
+            ),
           ),
         ],
       ),
     );
   }
+
+  void mostrarDialogoAprobacion(int idUsuario) {
+
+  fincaSeleccionada = null;
+  cargoSeleccionado = null;
+
+  showDialog(
+    context: context,
+    builder: (_) {
+
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+
+          return AlertDialog(
+            title: const Text('Asignar empleado'),
+
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                DropdownButtonFormField<String>(
+                  value: cargoSeleccionado,
+                  hint: const Text('Seleccione cargo'),
+
+                  items: cargos.map((cargo) {
+                    return DropdownMenuItem(
+                      value: cargo,
+                      child: Text(cargo),
+                    );
+                  }).toList(),
+
+                  onChanged: (value) {
+                    setDialogState(() {
+                      cargoSeleccionado = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 15),
+
+                DropdownButtonFormField<int>(
+                  value: fincaSeleccionada,
+                  hint: const Text('Seleccione finca'),
+
+                  items: fincas.map<DropdownMenuItem<int>>((finca) {
+
+                    return DropdownMenuItem(
+                      value: finca['id_finca'],
+                      child: Text(
+                        finca['nombre_finca'],
+                      ),
+                    );
+
+                  }).toList(),
+
+                  onChanged: (value) {
+                    setDialogState(() {
+                      fincaSeleccionada = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+
+            actions: [
+
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+
+              ElevatedButton(
+                onPressed: () {
+
+                  if (
+                    cargoSeleccionado == null ||
+                    fincaSeleccionada == null
+                  ) {
+                    return;
+                  }
+
+                  Navigator.pop(context);
+
+                  aprobarUsuario(
+                    idUsuario,
+                    cargoSeleccionado!,
+                    fincaSeleccionada!,
+                  );
+                },
+                child: const Text('Aprobar'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +329,9 @@ class _UsuariosPendientesScreenState
                                     ),
                                     ElevatedButton(
                                       onPressed: () =>
-                                          confirmarAccion(user['id_usuario'] ?? user['id'], true),
+                                          mostrarDialogoAprobacion(
+                                            user['id_usuario'],
+                                          ),
                                       child: const Text("Aprobar"),
                                     ),
                                   ],

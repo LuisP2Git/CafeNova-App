@@ -182,7 +182,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
-                  value: cargoController.text.isEmpty
+                  initialValue: cargoController.text.isEmpty
                       ? null
                       : cargoController.text,
                   decoration: const InputDecoration(
