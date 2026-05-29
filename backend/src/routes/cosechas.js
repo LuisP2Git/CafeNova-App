@@ -1,28 +1,30 @@
 const express = require('express');
 const router  = express.Router();
-const auth = require('../middleware/auth');
+
+const { verificarToken } = require('../middleware/auth');
 const validarFincaEmpleado = require('../middleware/fincaMiddleware');
 const allowRoles = require('../middleware/roleMiddleware');
 
 const { obtenerCosechas, obtenerCosecha, crearCosecha, actualizarCosecha, eliminarCosecha } = require('../controllers/cosechasController');
 
+
 router.get(
     '/',
-    auth,
+    verificarToken, 
     validarFincaEmpleado,
     obtenerCosechas
 );
 
 router.get(
     '/:id',
-    auth,
+    verificarToken, 
     validarFincaEmpleado,
     obtenerCosecha
 );
 
 router.post(
     '/',
-    auth,
+    verificarToken, 
     validarFincaEmpleado,
     allowRoles('Recolector'),
     crearCosecha
@@ -30,7 +32,7 @@ router.post(
 
 router.put(
     '/:id',
-    auth,
+    verificarToken, 
     validarFincaEmpleado,
     allowRoles('Recolector'),
     actualizarCosecha
@@ -38,7 +40,7 @@ router.put(
 
 router.delete(
     '/:id',
-    auth,
+    verificarToken, 
     validarFincaEmpleado,
     allowRoles('Administrador'),
     eliminarCosecha
