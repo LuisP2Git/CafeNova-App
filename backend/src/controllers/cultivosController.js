@@ -3,9 +3,38 @@ const db = require('../config/db');
 /** GET /cultivo — Obtener cultivos de la finca del empleado */
 function obtenerCultivos(req, res) {
 
+    // ADMINISTRADOR
+    if (req.usuario.rol === 'admin') {
+
+        return db.query(
+            `
+            SELECT
+                c.*,
+                l.nombre_lote,
+                f.nombre_finca
+            FROM cultivo c
+            JOIN lote l
+                ON c.id_lote = l.id_lote
+            JOIN finca f
+                ON l.id_finca = f.id_finca
+            `,
+            (err, results) => {
+
+                if (err) {
+                    return res.status(500).json({
+                        error: err.message
+                    });
+                }
+
+                return res.json(results);
+            }
+        );
+    }
+
+    // EMPLEADOS
     db.query(
         `
-        SELECT 
+        SELECT
             c.*,
             l.nombre_lote,
             f.nombre_finca
@@ -25,13 +54,15 @@ function obtenerCultivos(req, res) {
                 });
             }
 
-            res.json(results);
+            return res.json(results);
         }
     );
 }
 
 /** POST /cultivo — Crear cultivo */
 function crearCultivo(req, res) {
+
+    console.log('ROL:', req.usuario.rol);
 
     const {
         id_lote,
@@ -41,7 +72,46 @@ function crearCultivo(req, res) {
         estado
     } = req.body;
 
-    // Validar que el lote pertenezca a la finca del empleado
+    // ADMINISTRADOR
+    if (req.usuario.rol === 'admin') {
+
+        return db.query(
+            `
+            INSERT INTO cultivo (
+                id_lote,
+                tipo_cultivo,
+                variedad,
+                fecha_siembra,
+                estado
+            )
+            VALUES (?, ?, ?, ?, ?)
+            `,
+            [
+                id_lote,
+                tipo_cultivo,
+                variedad,
+                fecha_siembra,
+                estado
+            ],
+            (err, result) => {
+
+                if (err) {
+                    console.log('ERROR INSERT CULTIVO ADMIN:', err);
+
+                    return res.status(500).json({
+                        error: err.message
+                    });
+                }
+
+                return res.status(201).json({
+                    message: 'Cultivo creado',
+                    id: result.insertId
+                });
+            }
+        );
+    }
+
+    // EMPLEADOS
     db.query(
         `
         SELECT *
@@ -92,7 +162,7 @@ function crearCultivo(req, res) {
                         });
                     }
 
-                    res.status(201).json({
+                    return res.status(201).json({
                         message: 'Cultivo creado',
                         id: result.insertId
                     });
@@ -115,10 +185,58 @@ function actualizarCultivo(req, res) {
         estado
     } = req.body;
 
+    // ADMINISTRADOR
+    if (req.usuario.rol === 'admin') {
+
+        return db.query(
+            `
+            UPDATE cultivo
+            SET
+                id_lote = ?,
+                tipo_cultivo = ?,
+                variedad = ?,
+                fecha_siembra = ?,
+                estado = ?
+            WHERE id_cultivo = ?
+            `,
+            [
+                id_lote,
+                tipo_cultivo,
+                variedad,
+                fecha_siembra,
+                estado,
+                id
+            ],
+            (err, result) => {
+
+                if (err) {
+                    console.log('ERROR UPDATE CULTIVO:', err);
+
+                    return res.status(500).json({
+                        error: err.message
+                    });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({
+                        error: 'Cultivo no encontrado'
+                    });
+                }
+                console.log('ANTES DEL JSON FINAL');
+console.log('headersSent:', res.headersSent);
+
+                return res.json({
+                    message: 'Cultivo actualizado'
+                });
+            }
+        );
+    }
+
+    // EMPLEADOS
     db.query(
         `
         UPDATE cultivo
-        SET 
+        SET
             id_lote = ?,
             tipo_cultivo = ?,
             variedad = ?,
@@ -156,18 +274,50 @@ function actualizarCultivo(req, res) {
                 });
             }
 
-            res.json({
+            return res.json({
                 message: 'Cultivo actualizado'
             });
         }
     );
 }
-
 /** DELETE /cultivo/:id — Eliminar cultivo */
 function eliminarCultivo(req, res) {
 
     const { id } = req.params;
 
+    // ADMINISTRADOR
+    if (req.usuario.rol === 'admin') {
+
+        return db.query(
+            `
+            DELETE FROM cultivo
+            WHERE id_cultivo = ?
+            `,
+            [id],
+            (err, result) => {
+
+                if (err) {
+                    console.log('ERROR DELETE CULTIVO:', err);
+
+                    return res.status(500).json({
+                        error: err.message
+                    });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({
+                        error: 'Cultivo no encontrado'
+                    });
+                }
+
+                return res.json({
+                    message: 'Cultivo eliminado'
+                });
+            }
+        );
+    }
+
+    // EMPLEADOS
     db.query(
         `
         DELETE FROM cultivo
@@ -195,7 +345,7 @@ function eliminarCultivo(req, res) {
                 });
             }
 
-            res.json({
+            return res.json({
                 message: 'Cultivo eliminado'
             });
         }

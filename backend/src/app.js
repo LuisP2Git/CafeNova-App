@@ -30,7 +30,10 @@ app.use(express.urlencoded({
   extended: true,
   limit: '50mb'
 }));
-
+app.use((req, res, next) => {
+    console.log(req.method, req.originalUrl);
+    next();
+});
 // ─── Rutas ──────────────────────────────────────────────────────────────────
 app.use('/',          authRoutes);
 app.use('/fincas',    fincasRoutes);

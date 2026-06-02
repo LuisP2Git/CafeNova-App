@@ -29,8 +29,8 @@ function crearLote(req, res) {
 /** GET /lotes — Obtener lotes del usuario autenticado */
 function obtenerLotes(req, res) {
 
-    // ADMINISTRADOR
-    if (req.empleado.cargo === 'Administrador') {
+    // ADMIN DEL SISTEMA
+    if (req.usuario.rol === 'admin') {
 
         return db.query(
             `
@@ -40,9 +40,7 @@ function obtenerLotes(req, res) {
             FROM lote l
             INNER JOIN finca f
                 ON l.id_finca = f.id_finca
-            WHERE f.id_admin = ?
             `,
-            [req.usuario.id_usuario],
             (err, results) => {
 
                 if (err) {

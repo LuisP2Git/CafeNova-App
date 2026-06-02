@@ -19,6 +19,15 @@ async function registro(req, res) {
         id_finca
     } = req.body;
 
+    const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._#])[A-Za-z\d@$!%*?&._#]{8,}$/;
+
+if (!passwordRegex.test(password)) {
+    return res.status(400).json({
+        error: 'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.'
+    });
+}
+
     let fincaAsignada = id_finca;
 
 if (cargo === 'Administrador') {
@@ -84,28 +93,26 @@ if (cargo === 'Administrador') {
 
                     // Crear empleado
                     db.query(
-                        `
-                        INSERT INTO empleado (
-                            id_usuario,
-                            nombre,
-                            cargo,
-                            telefono,
-                            fecha_contratacion,
-                            id_finca
-                        )
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        `,
-                        [
-                            [
-                            id_usuario,
-                            nombre_usuario,
-                            cargo || 'Sin asignar',
-                            telefono || null,
-                            fecha_contratacion || null,
-                            fincaAsignada
-]
-                        ],
-                        (err2, resultEmpleado) => {
+    `
+    INSERT INTO empleado (
+        id_usuario,
+        nombre,
+        cargo,
+        telefono,
+        fecha_contratacion,
+        id_finca
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    [
+        id_usuario,
+        nombre_usuario,
+        cargo || 'Sin asignar',
+        telefono || null,
+        fecha_contratacion || null,
+        fincaAsignada
+    ],
+    (err2, resultEmpleado) => {
 
                             if (err2) {
                                 return db.rollback(() =>
