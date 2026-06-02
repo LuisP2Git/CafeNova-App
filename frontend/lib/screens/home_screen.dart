@@ -52,13 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     setState(() {
-      nombre = datos['nombre'] ?? '';
-      correo = datos['correo'] ?? '';
-      rol = datos['rol'] ?? '';
-      cargo = datos['cargo'] ?? '';
-      idFinca = datos['id_finca'] ?? 0;
-      idEmpleado = datos['id_empleado'] ?? 0;
-    });
+  nombre = datos['nombre'] ?? '';
+  correo = datos['correo'] ?? '';
+  rol = datos['rol'] ?? '';
+
+  cargo = rol == 'admin'
+      ? 'Administrador'
+      : (datos['cargo'] ?? '');
+
+  idFinca = datos['id_finca'] ?? 0;
+  idEmpleado = datos['id_empleado'] ?? 0;
+});
   }
 
   @override
@@ -265,9 +269,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Reportes', Icons.bar_chart, irAReportes,),
                       if (cargo == 'Auxiliar Administrativo')
                         _dashCard('Inventario', Icons.inventory, () {Navigator.push(context, MaterialPageRoute(builder: (_) =>const InventarioScreen(),),);},),
-                      if (cargo == 'Operario de Campo')
+                      if (rol != 'admin' && cargo == 'Operario de Campo')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
-                      if (cargo == 'Operario de Campo')
+                      if (rol != 'admin' && cargo == 'Operario de Campo')
                         _dashCard('Lotes', Icons.eco, irALotes),
                       if (cargoActual == 'Fumigador')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
@@ -286,6 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (cargo == 'Operario de Procesamiento')
                         _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (rol == 'admin')
+                        _dashCard('Cosechas', Icons.agriculture, irACosechas),
                         _dashCard('IA', Icons.psychology, irAIA),
                     ],
                   ),

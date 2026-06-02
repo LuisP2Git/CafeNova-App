@@ -118,6 +118,10 @@ class _CultivoScreenState extends State<CultivoScreen> {
     final url = idEditando == null
         ? 'http://localhost:3000/cultivo'
         : 'http://localhost:3000/cultivo/$idEditando';
+        print('idLote: $idLote');
+print('tipoSeleccionado: $tipoSeleccionado');
+print('variedad: ${variedadController.text}');
+print('fecha: ${fechaController.text}');
     final method = idEditando == null ? http.post : http.put;
 
     final res = await method(

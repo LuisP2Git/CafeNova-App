@@ -28,6 +28,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   
   String? cargoSeleccionado;
 
+  bool esPasswordSegura(String password) {
+  final regex = RegExp(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._#])[A-Za-z\d@$!%*?&._#]{8,}$',
+  );
+
+  return regex.hasMatch(password);
+}
+
 final List<String> cargos = [
   'Administrador',
   'Auxiliar Administrativo',
@@ -45,7 +53,14 @@ final List<String> cargos = [
       Mensajes.mostrar(context, 'Las contraseñas no coinciden', esError: true);
       return;
     }
-
+    if (!esPasswordSegura(passwordController.text)) {
+  Mensajes.mostrar(
+    context,
+    'La contraseña debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.',
+    esError: true,
+  );
+  return;
+}
     if (telefonoController.text.length != 10) {
       Mensajes.mostrar(context, 'El teléfono debe tener 10 dígitos', esError: true);
       return;
