@@ -14,6 +14,7 @@ import 'package:frontend/utils/mensajes.dart';
 import 'package:frontend/services/session_service.dart';
 import 'package:frontend/screens/cultivos_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
+import 'package:frontend/screens/fumigacion_screen.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -161,6 +162,11 @@ class _HomeScreenState extends State<HomeScreen> {
         MaterialPageRoute(builder: (_) => const CultivoScreen()));
   }
 
+  Future<void> irAFumigacion() async {
+    await Navigator.push(context,
+       MaterialPageRoute(builder: (_) => const FumigacionScreen()));
+  }
+
   void _onItemTapped(int index) {
     if (index == 0) return; // ya estás en home
     if (index == 1) { irALotes(); return; }
@@ -269,6 +275,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Reportes', Icons.bar_chart, irAReportes,),
                       if (cargo == 'Auxiliar Administrativo')
                         _dashCard('Inventario', Icons.inventory, () {Navigator.push(context, MaterialPageRoute(builder: (_) =>const InventarioScreen(),),);},),
+                      if (rol == 'admin' || cargo == 'Auxiliar Administrativo' ||cargo == 'Fumigador')
+                      _dashCard('Fumigación', Icons.bug_report, irAFumigacion,),
                       if (rol != 'admin' && cargo == 'Operario de Campo')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (cargoActual == 'Fumigador')
