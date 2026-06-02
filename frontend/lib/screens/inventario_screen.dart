@@ -334,80 +334,331 @@ class _InventarioScreenState
   }
 
   @override
-  Widget build(
-      BuildContext context) {
+Widget build(BuildContext context) {
 
-    return Scaffold(
+  return Scaffold(
 
-      appBar: AppBar(
-        title:
-            const Text(
-          'Inventario',
-        ),
-      ),
+    backgroundColor:
+        const Color(0xFFF5F1ED),
 
-      floatingActionButton:
-          FloatingActionButton(
-        onPressed: () =>
-            mostrarFormulario(),
-        child:
-            const Icon(
-          Icons.add,
-        ),
-      ),
+    floatingActionButton:
+        FloatingActionButton(
 
-      body: ListView.builder(
+      backgroundColor:
+          const Color(0xFF6B7F66),
 
-        padding:
-            const EdgeInsets.all(12),
+      onPressed: () =>
+          mostrarFormulario(),
 
-        itemCount:
-            inventario.length,
+      child: const Icon(Icons.add),
+    ),
 
-        itemBuilder:
-            (context, index) {
+    body: Column(
 
-          final item =
-              inventario[index];
+      children: [
 
-          return Card(
-            child: ListTile(
+        Container(
 
-              title: Text(
-                item[
-                    'nombre_insumo'],
-              ),
+          width: double.infinity,
 
-              subtitle: Text(
-                '${item['tipo']} - ${item['cantidad']} ${item['unidad']}',
-              ),
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 25,
+          ),
 
-              onTap: () =>
-                  mostrarFormulario(
-                insumo: item,
-              ),
+          decoration:
+              const BoxDecoration(
 
-              trailing:
-                  IconButton(
-                icon:
-                    const Icon(
-                  Icons.delete,
-                  color:
-                      Colors.red,
-                ),
-                onPressed:
-                    () {
-                  eliminarInsumo(
-                    item[
-                        'id_insumo'],
-                  );
-                },
-              ),
+            color: Color(0xFF6B7F66),
+
+            borderRadius:
+                BorderRadius.only(
+
+              bottomLeft:
+                  Radius.circular(25),
+
+              bottomRight:
+                  Radius.circular(25),
             ),
-          );
-        },
-      ),
-    );
-  }
-}
+          ),
 
+          child: SafeArea(
+
+            child: Row(
+
+              children: [
+
+                IconButton(
+
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                  ),
+
+                  onPressed: () =>
+                      Navigator.pop(
+                    context,
+                  ),
+                ),
+
+                const Icon(
+                  Icons.inventory,
+                  color: Colors.white,
+                ),
+
+                const SizedBox(width: 10),
+
+                const Text(
+
+                  'Inventario',
+
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        Expanded(
+
+          child: inventario.isEmpty
+
+              ? const Center(
+                  child: Text(
+                    'No hay insumos registrados',
+                  ),
+                )
+
+              : ListView.builder(
+
+                  padding:
+                      const EdgeInsets.all(
+                    16,
+                  ),
+
+                  itemCount:
+                      inventario.length,
+
+                  itemBuilder:
+                      (context, index) {
+
+                    final item =
+                        inventario[index];
+
+                    return GestureDetector(
+
+                      onTap: () =>
+                          mostrarFormulario(
+                        insumo: item,
+                      ),
+
+                      child: Container(
+
+                        margin:
+                            const EdgeInsets.only(
+                          bottom: 12,
+                        ),
+
+                        padding:
+                            const EdgeInsets.all(
+                          14,
+                        ),
+
+                        decoration:
+                            BoxDecoration(
+
+                          color: Colors.white,
+
+                          borderRadius:
+                              BorderRadius.circular(
+                            15,
+                          ),
+
+                          boxShadow: const [
+
+                            BoxShadow(
+                              color:
+                                  Colors.black12,
+                              blurRadius: 4,
+                              offset:
+                                  Offset(0, 2),
+                            ),
+                          ],
+                        ),
+
+                        child: Column(
+
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
+
+                          children: [
+
+                            Row(
+
+                              children: [
+
+                                Container(
+
+                                  padding:
+                                      const EdgeInsets
+                                          .all(
+                                    10,
+                                  ),
+
+                                  decoration:
+                                      BoxDecoration(
+
+                                    color:
+                                        const Color(
+                                      0xFF6B7F66,
+                                    ).withValues(
+                                      alpha: 0.15,
+                                    ),
+
+                                    borderRadius:
+                                        BorderRadius
+                                            .circular(
+                                      12,
+                                    ),
+                                  ),
+
+                                  child:
+                                      const Icon(
+
+                                    Icons
+                                        .inventory_2,
+
+                                    color: Color(
+                                      0xFF6B7F66,
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(
+                                  width: 12,
+                                ),
+
+                                Expanded(
+
+                                  child: Column(
+
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment
+                                            .start,
+
+                                    children: [
+
+                                      Text(
+
+                                        item[
+                                            'nombre_insumo'],
+
+                                        style:
+                                            const TextStyle(
+
+                                          fontWeight:
+                                              FontWeight
+                                                  .bold,
+
+                                          fontSize:
+                                              16,
+                                        ),
+                                      ),
+
+                                      const SizedBox(
+                                        height: 4,
+                                      ),
+
+                                      Text(
+
+                                        item[
+                                                'tipo'] ??
+                                            '',
+
+                                        style:
+                                            const TextStyle(
+
+                                          color: Colors
+                                              .black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                IconButton(
+
+                                  icon:
+                                      const Icon(
+
+                                    Icons
+                                        .delete_outline,
+
+                                    color:
+                                        Colors.red,
+                                  ),
+
+                                  onPressed:
+                                      () {
+
+                                    eliminarInsumo(
+                                      item[
+                                          'id_insumo'],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+
+                            const Divider(),
+
+                            Row(
+
+                              children: [
+
+                                const Icon(
+
+                                  Icons.scale,
+
+                                  size: 16,
+
+                                  color: Color(
+                                    0xFF6B7F66,
+                                  ),
+                                ),
+
+                                const SizedBox(
+                                  width: 6,
+                                ),
+
+                                Text(
+
+                                  '${item['cantidad']} ${item['unidad']}',
+
+                                  style:
+                                      const TextStyle(
+                                    fontWeight:
+                                        FontWeight
+                                            .w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    ),
+  );
+}}

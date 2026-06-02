@@ -1,5 +1,5 @@
 UPDATE usuarios 
 SET rol = 'admin', 
     estado = 'activo' 
-WHERE id_usuario = 9
+WHERE id_usuario = 1
   AND rol != 'admin';

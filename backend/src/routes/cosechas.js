@@ -26,7 +26,7 @@ router.post(
     '/',
     verificarToken, 
     validarFincaEmpleado,
-    allowRoles('Recolector'),
+    allowRoles('Recolector', 'Administrador'),
     crearCosecha
 );
 
@@ -34,7 +34,7 @@ router.put(
     '/:id',
     verificarToken, 
     validarFincaEmpleado,
-    allowRoles('Recolector'),
+    allowRoles('Recolector', 'Administrador'),
     actualizarCosecha
 );
 

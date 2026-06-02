@@ -271,18 +271,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Inventario', Icons.inventory, () {Navigator.push(context, MaterialPageRoute(builder: (_) =>const InventarioScreen(),),);},),
                       if (rol != 'admin' && cargo == 'Operario de Campo')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
-                      if (rol != 'admin' && cargo == 'Operario de Campo')
-                        _dashCard('Lotes', Icons.eco, irALotes),
                       if (cargoActual == 'Fumigador')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
-                      if (cargoActual == 'Fumigador')
-                        _dashCard('Lotes', Icons.eco, irALotes),
-                      if (cargoActual == 'Fumigador')
-                        _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (cargo == 'Recolector')
                         _dashCard('Cosechas', Icons.agriculture, irACosechas),
-                      if (cargo == 'Recolector')
-                        _dashCard('Lotes', Icons.eco, irALotes),
                       if (cargo == 'Pesador')
                         _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (cargo == 'Operario de Procesamiento')
@@ -290,7 +282,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (cargo == 'Operario de Procesamiento')
                         _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (rol == 'admin')
+                        _dashCard('Cultivos', Icons.agriculture, irACultivos),
+                      if (rol == 'admin')
                         _dashCard('Cosechas', Icons.agriculture, irACosechas),
+                      
                         _dashCard('IA', Icons.psychology, irAIA),
                     ],
                   ),
