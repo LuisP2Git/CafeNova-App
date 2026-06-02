@@ -92,10 +92,13 @@ function cosechaMensual(req, res) {
         ON c.id_cultivo = cu.id_cultivo
     JOIN lote l
         ON cu.id_lote = l.id_lote
+    JOIN finca f
+        ON l.id_finca = f.id_finca
+    WHERE f.id_admin = ?
     GROUP BY c.calidad
     `;
 
-    params = [];
+    params = [req.usuario.id_usuario];
 } 
     else {
         query = `
@@ -150,7 +153,9 @@ function porCalidad(req, res) {
         GROUP BY c.calidad
         `;
 
-        params = [];
+        params = [
+  req.usuario.id_usuario
+];
 
     } else {
 
@@ -322,20 +327,45 @@ function resumenPorLotes(req, res) {
 
     const { id_lote } = req.query;
 
-    let query = `
-        SELECT
-            l.id_lote,
-            l.nombre_lote,
-            SUM(c.cantidad_kg) AS total_kg
-        FROM cosecha c
-        JOIN cultivo cu
-            ON c.id_cultivo = cu.id_cultivo
-        JOIN lote l
-            ON cu.id_lote = l.id_lote
-        WHERE l.id_finca = ?
-    `;
+    let query;
+    let params;
 
-    const params = [req.empleado.id_finca];
+    if (req.usuario.rol === 'admin') {
+
+        query = `
+            SELECT
+                l.id_lote,
+                l.nombre_lote,
+                SUM(c.cantidad_kg) AS total_kg
+            FROM cosecha c
+            JOIN cultivo cu
+                ON c.id_cultivo = cu.id_cultivo
+            JOIN lote l
+                ON cu.id_lote = l.id_lote
+            JOIN finca f
+                ON l.id_finca = f.id_finca
+            WHERE f.id_admin = ?
+        `;
+
+        params = [req.usuario.id_usuario];
+
+    } else {
+
+        query = `
+            SELECT
+                l.id_lote,
+                l.nombre_lote,
+                SUM(c.cantidad_kg) AS total_kg
+            FROM cosecha c
+            JOIN cultivo cu
+                ON c.id_cultivo = cu.id_cultivo
+            JOIN lote l
+                ON cu.id_lote = l.id_lote
+            WHERE l.id_finca = ?
+        `;
+
+        params = [req.empleado.id_finca];
+    }
 
     if (id_lote) {
         query += ' AND l.id_lote = ?';
@@ -348,10 +378,7 @@ function resumenPorLotes(req, res) {
     `;
 
     db.query(query, params, (err, results) => {
-
         if (err) {
-            console.log(err);
-
             return res.status(500).json({
                 error: err.message
             });

@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
 import '../services/session_service.dart';
 import '../utils/mensajes.dart';
+import 'package:flutter/services.dart';
 
 class InventarioScreen extends StatefulWidget {
   const InventarioScreen({super.key});
@@ -266,17 +265,15 @@ class _InventarioScreenState
                 ),
 
                 TextField(
-                  controller:
-                      cantidadController,
-                  keyboardType:
-                      TextInputType
-                          .number,
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Cantidad',
-                  ),
-                ),
+  controller: cantidadController,
+  keyboardType: TextInputType.number,
+  inputFormatters: [
+    FilteringTextInputFormatter.digitsOnly,
+  ],
+  decoration: const InputDecoration(
+    labelText: 'Cantidad',
+  ),
+),
 
                 DropdownButtonFormField<
                     String>(

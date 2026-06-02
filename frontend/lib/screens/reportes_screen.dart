@@ -86,21 +86,31 @@ class _ReportesScreenState extends State<ReportesScreen>
   List get _fincasParaResumen => fincasReporte;
 
   List get _lotesParaResumen {
-    if (_resumenFincaId == null) return [];
-    final finca = fincasReporte.firstWhere(
-      (f) => (f['id_finca'] as int?) == _resumenFincaId,
-      orElse: () => {},
-    );
-    if (finca.isEmpty) return [];
-    // Agrupamos lotes únicos a partir de las cosechas
-    final lotes = <Map>{};
-    for (final c in (finca['cosechas'] as List? ?? [])) {
-      if (c['id_lote'] != null) {
-        lotes.add({'id_lote': c['id_lote'], 'nombre_lote': c['lote'] ?? 'Lote ${c["id_lote"]}'});
-      }
+
+  if (_resumenFincaId == null) return [];
+
+  final finca = fincasReporte.firstWhere(
+    (f) => (f['id_finca'] as int?) == _resumenFincaId,
+    orElse: () => {},
+  );
+
+  if (finca.isEmpty) return [];
+
+  final lotes = <Map<String, dynamic>>[];
+
+  if (finca['lotes'] is List) {
+
+    for (final lote in finca['lotes']) {
+
+      lotes.add({
+        'id_lote': lote['id_lote'],
+        'nombre_lote': lote['nombre_lote'],
+      });
     }
-    return lotes.toList();
   }
+
+  return lotes;
+}
 
   List _cosechasFiltradas(List cosechas) {
 
