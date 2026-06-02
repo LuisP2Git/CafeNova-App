@@ -7,6 +7,7 @@ const { verificarToken } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 
+
 // ============================================================
 // HELPER MYSQL
 // ============================================================
@@ -474,24 +475,53 @@ router.get('/pdf', verificarToken, async (req, res) => {
   try {
     const idUsuario = req.usuario.id_usuario;
 
-    const mensual = await run(
-      `
-      SELECT
-        DATE_FORMAT(co.fecha_cosecha, '%Y-%m') AS mes,
-        SUM(co.cantidad_kg) AS total_kg
-      FROM cosecha co
-      INNER JOIN cultivo cu
-        ON cu.id_cultivo = co.id_cultivo
-      INNER JOIN lote l
-        ON l.id_lote = cu.id_lote
-      INNER JOIN finca f
-        ON f.id_finca = l.id_finca
-      WHERE f.id_admin = ?
-      GROUP BY mes
-      ORDER BY mes ASC
-    `,
-      [idUsuario]
-    );
+    const { fincaId, loteId } = req.query;
+
+let query = `
+SELECT
+  DATE_FORMAT(co.fecha_cosecha, '%Y-%m') AS mes,
+  SUM(co.cantidad_kg) AS total_kg
+FROM cosecha co
+INNER JOIN cultivo cu
+  ON cu.id_cultivo = co.id_cultivo
+INNER JOIN lote l
+  ON l.id_lote = cu.id_lote
+INNER JOIN finca f
+  ON f.id_finca = l.id_finca
+WHERE f.id_admin = ?
+`;
+
+const params = [
+  req.usuario.id_usuario
+];
+
+if (fincaId) {
+  query += `
+    AND f.id_finca = ?
+  `;
+  params.push(fincaId);
+}
+
+if (loteId) {
+  query += `
+    AND l.id_lote = ?
+  `;
+  params.push(loteId);
+}
+
+query += `
+GROUP BY mes
+ORDER BY mes ASC
+`;
+
+const mensual =
+  await run(query, params);
+
+  const totalKg = mensual.reduce(
+  (sum, item) =>
+    sum + parseFloat(item.total_kg || 0),
+  0
+);
 
     const chartCanvas = new ChartJSNodeCanvas({
       width: 700,
@@ -530,32 +560,239 @@ router.get('/pdf', verificarToken, async (req, res) => {
 
     doc.pipe(res);
 
-    doc
-      .fontSize(22)
-      .text('CafeNova', {
-        align: 'center',
-      });
+doc.moveDown(5);
+
+// TITULO
+
+doc
+  .fillColor('#4E5E4A')
+  .fontSize(30)
+  .font('Helvetica-Bold')
+  .text(
+    'CafeNova',
+    {
+      align: 'center'
+    }
+  );
+
+doc
+  .fontSize(14)
+  .fillColor('#666')
+  .font('Helvetica')
+  .text(
+    'Sistema Inteligente de Gestión Cafetera',
+    {
+      align: 'center'
+    }
+  );
+
+doc.moveDown();
+
+doc
+  .fillColor('#222')
+  .fontSize(20)
+  .font('Helvetica-Bold')
+  .text(
+    'Reporte Ejecutivo de Producción',
+    {
+      align: 'center'
+    }
+  );
+
+doc.moveDown(2);
+
+
+// TARJETA RESUMEN
+
+doc.roundedRect(
+  40,
+  180,
+  520,
+  110,
+  12
+)
+.fill('#F5F1ED');
+
+doc.fillColor('#4E5E4A')
+   .fontSize(16)
+   .font('Helvetica-Bold')
+   .text(
+      'Resumen General',
+      60,
+      200
+   );
+
+doc.fillColor('#333')
+   .fontSize(11)
+   .font('Helvetica')
+   .text(
+      `Fecha: ${new Date().toLocaleDateString()}`,
+      60,
+      230
+   );
+
+doc.text(
+  `Meses analizados: ${mensual.length}`,
+  60,
+  270
+);
+
+if (fincaId) {
+  doc.text(
+    `Finca: ${fincaId}`,
+    330,
+    230
+  );
+}
+
+if (loteId) {
+  doc.text(
+    `Lote: ${loteId}`,
+    330,
+    250
+  );
+}
 
     doc.moveDown();
 
-    doc.fontSize(16).text('Reporte General');
+doc
+  .fillColor('#4E5E4A')
+  .fontSize(18)
+  .font('Helvetica-Bold')
+  .text(
+    'Producción Mensual',
+    {
+      align: 'center'
+    }
+  );
 
-    doc.moveDown();
+doc.moveDown();
 
-    doc.image(image, {
-      fit: [500, 250],
-      align: 'center',
-    });
+doc.image(image, {
+  width: 520,
+  align: 'center',
+});
+
+doc.moveDown();
+
+doc.moveTo(40, 320)
+   .lineTo(550, 320)
+   .stroke('#6B7F66');
 
     doc.moveDown(2);
 
-    mensual.forEach((m) => {
-      doc.text(
-        `${m.mes}: ${parseFloat(
-          m.total_kg || 0
-        ).toFixed(1)} KG`
-      );
-    });
+doc
+  .fontSize(16)
+  .fillColor('#4E5E4A')
+  .font('Helvetica-Bold')
+  .text('Detalle de Producción');
+
+    let y = doc.y + 10;
+
+doc.rect(
+  40,
+  y,
+  500,
+  30
+)
+.fill('#6B7F66');
+
+doc.fillColor('white')
+   .fontSize(11)
+   .font('Helvetica-Bold');
+
+doc.text(
+  'Mes',
+  60,
+  y + 9
+);
+
+doc.text(
+  'Producción',
+  320,
+  y + 9
+);
+
+y += 30;
+
+mensual.forEach((m, index) => {
+
+  const color =
+      index % 2 === 0
+          ? '#FFFFFF'
+          : '#F5F1ED';
+
+  doc.rect(
+    40,
+    y,
+    500,
+    28
+  )
+  .fill(color);
+
+  doc.fillColor('#333')
+     .fontSize(10)
+     .font('Helvetica');
+
+  doc.text(
+    m.mes,
+    60,
+    y + 8
+  );
+
+  doc.text(
+    `${parseFloat(
+      m.total_kg || 0
+    ).toFixed(1)} KG`,
+    320,
+    y + 8
+  );
+
+  y += 28;
+});
+    doc.moveDown(3);
+
+doc.fillColor('#888')
+   .fontSize(9);
+
+doc.text(
+  'CafeNova © 2026',
+  {
+    align: 'center'
+  }
+);
+
+doc.text(
+  'Sistema Inteligente de Gestión Cafetera',
+  {
+    align: 'center'
+  }
+);
+
+doc.text(
+  'Reporte generado automáticamente',
+  {
+    align: 'center'
+  }
+);
+
+doc.moveDown(3);
+
+doc
+  .fillColor('#4E5E4A')
+  .fontSize(14)
+  .font('Helvetica-Bold')
+  .text('Conclusión');
+
+doc.moveDown();
+
+doc
+  .fillColor('#444')
+  .fontSize(11)
+  .font('Helvetica')
+  .text(
+    `Durante el periodo analizado se registró una producción total de ${totalKg.toFixed(1)} KG. La información presentada corresponde a los registros almacenados en CafeNova y permite evaluar el comportamiento productivo de los cultivos gestionados.`
+  );
 
     doc.end();
   } catch (error) {
