@@ -173,7 +173,7 @@ class _UsuariosPendientesScreenState
               children: [
 
                 DropdownButtonFormField<String>(
-                  value: cargoSeleccionado,
+                  initialValue: cargoSeleccionado,
                   hint: const Text('Seleccione cargo'),
 
                   items: cargos.map((cargo) {
@@ -193,7 +193,7 @@ class _UsuariosPendientesScreenState
                 const SizedBox(height: 15),
 
                 DropdownButtonFormField<int>(
-                  value: fincaSeleccionada,
+                  initialValue: fincaSeleccionada,
                   hint: const Text('Seleccione finca'),
 
                   items: fincas.map<DropdownMenuItem<int>>((finca) {

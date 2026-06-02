@@ -6,7 +6,6 @@ import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // ─── Constantes de dominio ────────────────────────────────────────────────────
 const _estadosCultivo = [
@@ -60,12 +59,23 @@ class _CultivoScreenState extends State<CultivoScreen> {
   }
 
   Future<void> _init() async {
-    token = await SessionService.getToken();
-    correo = await SessionService.getCorreo() ?? '';
-    nombre = await SessionService.getNombre() ?? '';
-    if (token == null) return;
-    await Future.wait([obtenerLotes(), obtenerCultivos()]);
-  }
+
+  final datos = await SessionService.getDatosSesion();
+
+  token = await SessionService.getToken();
+
+  nombre = datos['nombre'] ?? '';
+  correo = datos['correo'] ?? '';
+
+  if (token == null) return;
+
+  setState(() {});
+
+  await Future.wait([
+    obtenerLotes(),
+    obtenerCultivos(),
+  ]);
+}
 
   Future<void> obtenerLotes() async {
     final res = await http.get(
@@ -367,26 +377,42 @@ class _CultivoScreenState extends State<CultivoScreen> {
   }
 
   void _onItemTapped(int index) async {
-    if (index == 0) {
-      Navigator.pop(context);
-      return;
-    }
-    final prefs = await SharedPreferences.getInstance();
-    final n = prefs.getString('nombre') ?? nombre;
-    final c = prefs.getString('correo') ?? correo;
-    if (!mounted) return;
-    if (index == 1) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)));
-    } else if (index == 2) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const ReportesScreen()));
-    } else if (index == 3) {
-      Navigator.push(context,
-          MaterialPageRoute(
-              builder: (_) => ProfileScreen(nombre: n, correo: c)));
-    }
+
+  if (index == 0) {
+    Navigator.pop(context);
+    return;
   }
+
+  if (!mounted) return;
+
+  if (index == 1) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LotesScreen(),
+      ),
+    );
+
+  } else if (index == 2) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReportesScreen(),
+      ),
+    );
+
+  } else if (index == 3) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ProfileScreen(),
+      ),
+    );
+  }
+}
 
   Widget _cultivoCard(Map c) {
     final estado = c['estado'] ?? '-';

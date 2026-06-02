@@ -241,7 +241,7 @@ class _InventarioScreenState
 
                 DropdownButtonFormField<
                     String>(
-                  value:
+                  initialValue:
                       tipoSeleccionado,
                   items: tipos
                       .map(
@@ -280,7 +280,7 @@ class _InventarioScreenState
 
                 DropdownButtonFormField<
                     String>(
-                  value:
+                  initialValue:
                       unidadSeleccionada,
                   items: unidades
                       .map(

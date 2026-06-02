@@ -7,18 +7,16 @@ import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class FincasScreen extends StatefulWidget {
-  final String nombreUsuario;
-  const FincasScreen({super.key, required this.nombreUsuario});
+  const FincasScreen({super.key});
 
   @override
   State<FincasScreen> createState() => _FincasScreenState();
 }
 
 class _FincasScreenState extends State<FincasScreen> {
-  late String nombreUsuario;
+  String nombreUsuario = '';
 
   List fincas = [];
   List departamentos = [];
@@ -43,18 +41,20 @@ class _FincasScreenState extends State<FincasScreen> {
   @override
   void initState() {
     super.initState();
-    nombreUsuario = widget.nombreUsuario;
     _init();
   }
 
   Future<void> _init() async {
+    final datos = await SessionService.getDatosSesion();
     token = await SessionService.getToken();
-    correo = await SessionService.getCorreo() ?? '';
-    rol = await SessionService.getRol() ?? '';
+    nombreUsuario = datos['nombre'] ?? '';
+    correo = datos['correo'] ?? '';
+    rol = datos['rol'] ?? '';
     if (token == null) return;
+    setState(() {});
     await obtenerFincas();
     await obtenerDepartamentos();
-  }
+    }
 
   Future<void> obtenerDepartamentos() async {
     try {
@@ -332,26 +332,42 @@ class _FincasScreenState extends State<FincasScreen> {
   }
 
   void _onItemTapped(int index) async {
-    if (index == 0) {
-      Navigator.pop(context);
-      return;
-    }
-    final prefs = await SharedPreferences.getInstance();
-    final n = prefs.getString('nombre') ?? nombreUsuario;
-    final c = prefs.getString('correo') ?? correo;
-    if (!mounted) return;
-    if (index == 1) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)));
-    } else if (index == 2) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const ReportesScreen()));
-    } else if (index == 3) {
-      Navigator.push(context,
-          MaterialPageRoute(
-              builder: (_) => ProfileScreen(nombre: n, correo: c)));
-    }
+
+  if (index == 0) {
+    Navigator.pop(context);
+    return;
   }
+
+  if (!mounted) return;
+
+  if (index == 1) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LotesScreen(),
+      ),
+    );
+
+  } else if (index == 2) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReportesScreen(),
+      ),
+    );
+
+  } else if (index == 3) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ProfileScreen(),
+      ),
+    );
+  }
+}
 
   Widget _fincaCard(Map finca) {
     return GestureDetector(

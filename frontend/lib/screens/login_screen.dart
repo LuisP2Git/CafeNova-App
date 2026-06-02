@@ -59,15 +59,11 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => HomeScreen(
-              nombre: data['usuario']['nombre_usuario'],
-              correo: data['usuario']['correo'],
-              rol: data['usuario']['rol'],
-              cargo: data['usuario']['cargo'] ?? '',
-              mostrarBienvenida: true, // ✅ FIX: solo en login real
-            ),
+            builder: (_) => const HomeScreen(
+            mostrarBienvenida: true,
           ),
-        );
+        ),
+      );
 
       } else if (response.statusCode == 403) {
         Mensajes.mostrar(

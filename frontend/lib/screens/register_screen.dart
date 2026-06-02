@@ -129,7 +129,7 @@ final List<String> cargos = [
                   Padding(
   padding: const EdgeInsets.only(bottom: 12),
   child: DropdownButtonFormField<String>(
-    value: cargoSeleccionado,
+    initialValue: cargoSeleccionado,
     decoration: InputDecoration(
       hintText: "Seleccione un cargo",
       filled: true,

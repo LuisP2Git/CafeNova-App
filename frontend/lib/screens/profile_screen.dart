@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/services/session_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final String nombre;
-  final String correo;
 
-  const ProfileScreen({
-    super.key,
-    required this.nombre,
-    required this.correo,
-  });
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -26,25 +19,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String nombre = '';
   String correo = '';
   String rol = '';
+  String cargo = '';
 
   @override
   void initState() {
-    super.initState();
-    nombre = widget.nombre;
-    correo = widget.correo;
-    _cargarDatosSesion();
-  }
+  super.initState();
+  _cargarDatosSesion();
+}
 
   Future<void> _cargarDatosSesion() async {
     final datos = await SessionService.getDatosSesion();
+    if (!mounted) return;
     setState(() {
-      nombre = datos['nombre']?.isNotEmpty == true
-          ? datos['nombre']!
-          : widget.nombre;
-      correo = datos['correo']?.isNotEmpty == true
-          ? datos['correo']!
-          : widget.correo;
+      nombre = datos['nombre'] ?? '';
+      correo = datos['correo'] ?? '';
       rol = datos['rol'] ?? '';
+      cargo = datos['cargo'] ?? '';
     });
   }
 
@@ -58,24 +48,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _onItemTapped(int index) async {
+  void _onItemTapped(int index) {
     if (index == 3) return;
-    final prefs = await SharedPreferences.getInstance();
-    final n = prefs.getString('nombre') ?? nombre;
-    if (!mounted) return;
     if (index == 0) {
       Navigator.pop(context);
-    } else if (index == 1) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)));
-    } else if (index == 2) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const ReportesScreen()));
-    }
+      } else if (index == 1) {
+        Navigator.push(
+          context,
+        MaterialPageRoute(
+          builder: (_) => const LotesScreen(),
+          ),
+        );
+      } else if (index == 2) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReportesScreen(),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
+
+    final ancho = MediaQuery.of(context).size.width;
+    
     final inicial =
         nombre.isNotEmpty ? nombre[0].toUpperCase() : '?';
 
@@ -112,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 24),
           CircleAvatar(
-            radius: 50,
+            radius: ancho < 600 ? 45 : 60,
             backgroundColor: const Color(0xFF6B7F66),
             child: Text(
               inicial,
@@ -125,10 +123,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 12),
 
-          Text(
-            nombre,
-            style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold),
+          Text(nombre, style: TextStyle
+          (fontSize: ancho < 600 ? 20 : 24, fontWeight: FontWeight.bold,),
           ),
           Text(
             correo.isNotEmpty ? correo : 'Sin correo registrado',
@@ -166,6 +162,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _cardItem(Icons.email_outlined, 'Correo', correo),
                   const SizedBox(height: 10),
                   _cardItem(Icons.badge_outlined, 'Rol', rol.isNotEmpty ? rol : '-'),
+                  const SizedBox(height: 10),
+                  _cardItem(Icons.work_outline, 'Cargo', cargo.isNotEmpty ? cargo : '-',),
                   const SizedBox(height: 10),
                   _cardItem(Icons.edit_outlined, 'Editar perfil', null,
                       onTap: () {}),

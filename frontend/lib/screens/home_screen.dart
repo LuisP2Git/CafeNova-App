@@ -16,47 +16,72 @@ import 'package:frontend/screens/cultivos_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String nombre;
-  final String correo;
-  final String rol;
-  final String cargo;
+
   final bool mostrarBienvenida;
 
   const HomeScreen({
     super.key,
-    required this.nombre,
-    required this.correo,
-    required this.rol,
-    required this.cargo,
     this.mostrarBienvenida = false,
-});
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
   List lotes = [];
   final int _selectedIndex = 0;
+
   String? token;
+
+  String nombre = '';
+  String correo = '';
+  String rol = '';
+  String cargo = '';
+
+  int idFinca = 0;
+  int idEmpleado = 0;
+
   String correoResuelto = '';
+
+  Future<void> cargarSesion() async {
+
+    final datos = await SessionService.getDatosSesion();
+
+    if (!mounted) return;
+
+    setState(() {
+      nombre = datos['nombre'] ?? '';
+      correo = datos['correo'] ?? '';
+      rol = datos['rol'] ?? '';
+      cargo = datos['cargo'] ?? '';
+      idFinca = datos['id_finca'] ?? 0;
+      idEmpleado = datos['id_empleado'] ?? 0;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    correoResuelto = widget.correo;
-    initApp();
 
-    // ✅ FIX: solo muestra bienvenida si el flag está activo (login real)
+    Future.microtask(() async {
+  await cargarSesion();
+  await initApp();
+});
+
     if (widget.mostrarBienvenida) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Mensajes.mostrar(
-              context, 'Bienvenido ${widget.nombre} (${widget.rol})');
+            context,
+            'Bienvenido $nombre ($rol)',
+          );
         }
       });
     }
   }
+
 
   Future<void> initApp() async {
     token = await SessionService.getToken();
@@ -90,21 +115,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> irALotes() async {
     await Navigator.push(context,
-        MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: widget.nombre)));
+        MaterialPageRoute(builder: (_) => const LotesScreen()));
     await obtenerLotes();
   }
 
   Future<void> irAFincas() async {
-    if (widget.rol != 'admin') {
+    if (rol != 'admin') {
       Mensajes.mostrar(context, 'No tienes permisos', esError: true);
       return;
     }
     await Navigator.push(context,
-        MaterialPageRoute(builder: (_) => FincasScreen(nombreUsuario: widget.nombre)));
+        MaterialPageRoute(builder: (_) => const FincasScreen()));
   }
 
   Future<void> irAEmpleados() async {
-    if (widget.rol != 'admin') {
+    if (rol != 'admin') {
       Mensajes.mostrar(context, 'No tienes permisos', esError: true);
       return;
     }
@@ -138,17 +163,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (index == 2) { irAReportes(); return; }
     if (index == 3) {
       Navigator.push(context,
-          MaterialPageRoute(builder: (_) => ProfileScreen(
-                nombre: widget.nombre,
-                correo: correoResuelto,
-              )));
+          MaterialPageRoute(builder: (_) => 
+          const ProfileScreen()
+          )
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color rolColor = widget.rol == 'admin' ? Colors.green : Colors.blue;
-    final cargo = widget.cargo;
+    final Color rolColor = rol == 'admin' ? Colors.green : Colors.blue;
+    final cargoActual = cargo;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
@@ -182,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(widget.nombre,
+                      Text(nombre,
                           style: const TextStyle(
                               color: Colors.white, fontWeight: FontWeight.bold)),
                       if (correoResuelto.isNotEmpty)
@@ -218,22 +243,37 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 1.2,
                     children: [
-                      if (widget.rol == 'admin')
+                      if (rol == 'admin')
                         _dashCard('Fincas', Icons.park, irAFincas),
                       _dashCard('Lotes', Icons.eco, irALotes),
-                      if (widget.rol == 'admin')
+                      if (rol == 'admin')
                         _dashCard('Empleados', Icons.people, irAEmpleados),
+                      if (rol == 'admin')
+                        _dashCard(
+                          'Inventario',
+                          Icons.inventory,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const InventarioScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      if (rol == 'admin')
+                        _dashCard('Reportes', Icons.bar_chart, irAReportes,),
                       if (cargo == 'Auxiliar Administrativo')
                         _dashCard('Inventario', Icons.inventory, () {Navigator.push(context, MaterialPageRoute(builder: (_) =>const InventarioScreen(),),);},),
                       if (cargo == 'Operario de Campo')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (cargo == 'Operario de Campo')
                         _dashCard('Lotes', Icons.eco, irALotes),
-                      if (cargo == 'Fumigador')
+                      if (cargoActual == 'Fumigador')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
-                      if (cargo == 'Fumigador')
+                      if (cargoActual == 'Fumigador')
                         _dashCard('Lotes', Icons.eco, irALotes),
-                      if (cargo == 'Fumigador')
+                      if (cargoActual == 'Fumigador')
                         _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (cargo == 'Recolector')
                         _dashCard('Cosechas', Icons.agriculture, irACosechas),
@@ -245,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (cargo == 'Operario de Procesamiento')
                         _dashCard('Reportes', Icons.bar_chart, irAReportes),
-                      if (widget.rol == 'admin')
+                      if (rol == 'admin')
                         _dashCard('IA', Icons.psychology, irAIA),
                     ],
                   ),

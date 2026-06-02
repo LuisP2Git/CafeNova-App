@@ -6,19 +6,17 @@ import 'package:frontend/services/session_service.dart';
 import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 import 'package:frontend/screens/profile_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LotesScreen extends StatefulWidget {
-  final String nombreUsuario;
 
-  const LotesScreen({super.key, required this.nombreUsuario});
+  const LotesScreen({super.key});
 
   @override
   State<LotesScreen> createState() => _LotesScreenState();
 }
 
 class _LotesScreenState extends State<LotesScreen> {
-  late String nombreUsuario;
+  String nombreUsuario = '';
 
   List lotes = [];
   List fincas = [];
@@ -52,19 +50,23 @@ class _LotesScreenState extends State<LotesScreen> {
 
   @override
   void initState() {
-    super.initState();
-    nombreUsuario = widget.nombreUsuario;
-    init();
-  }
+  super.initState();
+  init();
+}
 
   Future<void> init() async {
     token = await SessionService.getToken();
-    // ✅ FIX: recuperar correo desde persistencia
-    correo = await SessionService.getCorreo() ?? '';
-    rol = await SessionService.getRol() ?? '';
-    await obtenerLotes();
-    await obtenerFincas();
-  }
+    final datos = await SessionService.getDatosSesion();
+    if (!mounted) return;
+    setState(() {
+      nombreUsuario = datos['nombre'] ?? '';
+      correo = datos['correo'] ?? '';
+      rol = datos['rol'] ?? '';
+    });
+
+  await obtenerLotes();
+  await obtenerFincas();
+}
 
   Future<void> obtenerLotes() async {
     final response = await http.get(
@@ -291,23 +293,22 @@ class _LotesScreenState extends State<LotesScreen> {
     );
   }
 
-  void _onItemTapped(int index) async {
+  void _onItemTapped(int index) {
     if (index == 1) return;
-    final prefs = await SharedPreferences.getInstance();
-    final nombre = prefs.getString('nombre') ?? nombreUsuario;
-    final correoGuardado = prefs.getString('correo') ?? correo;
-    if (!mounted) return;
     if (index == 0) {
       Navigator.pop(context);
-    } else if (index == 2) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const ReportesScreen()));
+      } else if (index == 2) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ReportesScreen(),
+            ),
+          );
     } else if (index == 3) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) =>
-              ProfileScreen(nombre: nombre, correo: correoGuardado),
+          MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
         ),
       );
     }

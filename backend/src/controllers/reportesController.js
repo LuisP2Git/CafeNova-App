@@ -1,13 +1,32 @@
 const PDFDocument = require('pdfkit');
 const db = require('../config/db');
 
+function esAdmin(req) {
+    return req.usuario.rol === 'admin';
+}
+
+function obtenerFiltroReportes(req) {
+
+    if (req.usuario.rol === 'admin') {
+
+        return {
+            admin: true
+        };
+    }
+
+    return {
+        admin: false,
+        finca: req.empleado.id_finca
+    };
+}
+
 /** GET /reportes/total-cosecha */
 function totalCosecha(req, res) {
 
     let query;
     let params;
 
-    if (req.empleado.cargo === 'Administrador') {
+    if (req.usuario.rol === 'admin') {
 
         query = `
             SELECT
@@ -57,40 +76,86 @@ function totalCosecha(req, res) {
 /** GET /reportes/cosecha-mensual */
 function cosechaMensual(req, res) {
 
-    db.query(
-        `
-        SELECT 
-            DATE_FORMAT(c.fecha_cosecha, '%Y-%m') AS mes,
+    const filtro = obtenerFiltroReportes(req);
+
+    let query;
+    let params;
+
+    if (filtro.admin) {
+
+    query = `
+    SELECT
+        c.calidad,
+        SUM(c.cantidad_kg) AS total_kg
+    FROM cosecha c
+    JOIN cultivo cu
+        ON c.id_cultivo = cu.id_cultivo
+    JOIN lote l
+        ON cu.id_lote = l.id_lote
+    GROUP BY c.calidad
+    `;
+
+    params = [];
+} 
+    else {
+        query = `
+        SELECT
+            cu.tipo_cultivo,
+            cu.variedad,
+            SUM(c.cantidad_kg) AS total
+        FROM cosecha c
+        JOIN cultivo cu
+            ON c.id_cultivo = cu.id_cultivo
+        JOIN lote l
+            ON cu.id_lote = l.id_lote
+        GROUP BY cu.id_cultivo
+        ORDER BY total DESC
+        LIMIT 1
+        `;
+
+params = [filtro.finca];
+    }
+
+    db.query(query, params, (err, result) => {
+
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
+        }
+
+        res.json(result);
+    });
+}
+
+/** GET /reportes/por-calidad */
+function porCalidad(req, res) {
+
+    const filtro = obtenerFiltroReportes(req);
+
+    let query;
+    let params;
+
+    if (filtro.admin) {
+
+        query = `
+        SELECT
+            c.calidad,
             SUM(c.cantidad_kg) AS total_kg
         FROM cosecha c
         JOIN cultivo cu
             ON c.id_cultivo = cu.id_cultivo
         JOIN lote l
             ON cu.id_lote = l.id_lote
-        WHERE l.id_finca = ?
-        GROUP BY mes
-        ORDER BY mes
-        `,
-        [req.empleado.id_finca],
-        (err, result) => {
+        GROUP BY c.calidad
+        `;
 
-            if (err) {
-                return res.status(500).json({
-                    error: err.message
-                });
-            }
+        params = [];
 
-            res.json(result);
-        }
-    );
-}
+    } else {
 
-/** GET /reportes/por-calidad */
-function porCalidad(req, res) {
-
-    db.query(
-        `
-        SELECT 
+        query = `
+        SELECT
             c.calidad,
             SUM(c.cantidad_kg) AS total_kg
         FROM cosecha c
@@ -100,27 +165,57 @@ function porCalidad(req, res) {
             ON cu.id_lote = l.id_lote
         WHERE l.id_finca = ?
         GROUP BY c.calidad
-        `,
-        [req.empleado.id_finca],
-        (err, result) => {
+        `;
 
-            if (err) {
-                return res.status(500).json({
-                    error: err.message
-                });
-            }
+        params = [filtro.finca];
+    }
 
-            res.json(result);
+    db.query(query, params, (err, result) => {
+
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
         }
-    );
+
+        res.json(result);
+    });
 }
 
 /** GET /reportes/mejor-cultivo */
 function mejorCultivo(req, res) {
 
-    db.query(
-        `
-        SELECT 
+    const filtro = obtenerFiltroReportes(req);
+
+    let query;
+    let params;
+
+    if (filtro.admin) {
+
+        query = `
+        SELECT
+            cu.tipo_cultivo,
+            cu.variedad,
+            SUM(c.cantidad_kg) AS total
+        FROM cosecha c
+        JOIN cultivo cu
+            ON c.id_cultivo = cu.id_cultivo
+        JOIN lote l
+            ON cu.id_lote = l.id_lote
+        JOIN finca f
+            ON l.id_finca = f.id_finca
+        WHERE f.id_admin = ?
+        GROUP BY cu.id_cultivo
+        ORDER BY total DESC
+        LIMIT 1
+        `;
+
+        params = [];
+
+    } else {
+
+        query = `
+        SELECT
             cu.tipo_cultivo,
             cu.variedad,
             SUM(c.cantidad_kg) AS total
@@ -133,19 +228,21 @@ function mejorCultivo(req, res) {
         GROUP BY cu.id_cultivo
         ORDER BY total DESC
         LIMIT 1
-        `,
-        [req.empleado.id_finca],
-        (err, result) => {
+        `;
 
-            if (err) {
-                return res.status(500).json({
-                    error: err.message
-                });
-            }
+        params = [filtro.finca];
+    }
 
-            res.json(result[0] || {});
+    db.query(query, params, (err, result) => {
+
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
         }
-    );
+
+        res.json(result[0] || {});
+    });
 }
 
 /** GET /reportes/por-fecha */
@@ -159,9 +256,35 @@ function porFecha(req, res) {
         });
     }
 
-    db.query(
-        `
-        SELECT 
+    const filtro = obtenerFiltroReportes(req);
+
+    let query;
+    let params;
+
+    if (filtro.admin) {
+
+        query = `
+        SELECT
+            DATE(c.fecha_cosecha) AS fecha,
+            SUM(c.cantidad_kg) AS total_kg
+        FROM cosecha c
+        JOIN cultivo cu
+            ON c.id_cultivo = cu.id_cultivo
+        JOIN lote l
+            ON cu.id_lote = l.id_lote
+        WHERE c.fecha_cosecha BETWEEN ? AND ?
+        GROUP BY fecha
+        ORDER BY fecha
+        `;
+        params = [
+            desde,
+            hasta
+        ];
+
+    } else {
+
+        query = `
+        SELECT
             DATE(c.fecha_cosecha) AS fecha,
             SUM(c.cantidad_kg) AS total_kg
         FROM cosecha c
@@ -173,19 +296,25 @@ function porFecha(req, res) {
         AND c.fecha_cosecha BETWEEN ? AND ?
         GROUP BY fecha
         ORDER BY fecha
-        `,
-        [req.empleado.id_finca, desde, hasta],
-        (err, result) => {
+        `;
 
-            if (err) {
-                return res.status(500).json({
-                    error: err.message
-                });
-            }
+        params = [
+            filtro.finca,
+            desde,
+            hasta
+        ];
+    }
 
-            res.json(result);
+    db.query(query, params, (err, result) => {
+
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
         }
-    );
+
+        res.json(result);
+    });
 }
 
 /** GET /reportes/resumen-lotes */

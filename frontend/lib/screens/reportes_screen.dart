@@ -3,7 +3,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/utils/mensajes.dart';
 import '../services/api_service.dart';
 import '../services/session_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'home_screen.dart';
 import 'lotes_screen.dart';
 import 'profile_screen.dart';
@@ -388,39 +387,39 @@ List get _resumenCalidad {
   }
 
   // FIX #5 — Navegación corregida: siempre pushAndRemoveUntil hacia Inicio
-  void _onItemTapped(int index) async {
-    if (index == _selectedIndex) return;
-    final prefs = await SharedPreferences.getInstance();
-    final n = prefs.getString('nombre') ?? nombre;
-    final c = prefs.getString('correo') ?? correo;
-    final r = prefs.getString('rol') ?? rol;
-    if (!mounted) return;
+  void _onItemTapped(int index) {
+  if (index == _selectedIndex) return;
 
-    switch (index) {
-      case 0:
-        // FIX: limpiar toda la pila y llevar a HomeScreen
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-              builder: (_) => HomeScreen(nombre: n, correo: c, rol: r, cargo: prefs.getString('cargo') ?? '',)),
-          (route) => false,
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => LotesScreen(nombreUsuario: n)),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) => ProfileScreen(nombre: n, correo: c)),
-        );
-        break;
-    }
+  switch (index) {
+    case 0:
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomeScreen(),
+        ),
+        (route) => false,
+      );
+      break;
+
+    case 1:
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LotesScreen(),
+        ),
+      );
+      break;
+
+    case 3:
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+      break;
   }
+}
 
   // ─── UI ────────────────────────────────────────────────────────────────────
   @override
@@ -480,18 +479,12 @@ List get _resumenCalidad {
               IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
                   if (!mounted) return;
                   // FIX #5 — flecha atrás también limpiar pila correctamente
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => HomeScreen(
-                        nombre: prefs.getString('nombre') ?? nombre,
-                        correo: prefs.getString('correo') ?? correo,
-                        rol: prefs.getString('rol') ?? rol,
-                        cargo: prefs.getString('cargo') ?? '',
-                      ),
+                      builder: (_) => const HomeScreen(),
                     ),
                     (route) => false,
                   );

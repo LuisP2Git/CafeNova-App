@@ -39,23 +39,15 @@ class _AuthCheckState extends State<AuthCheck> {
     final prefs = await SharedPreferences.getInstance();
 
     final token = prefs.getString('token');
-    final nombre = prefs.getString('nombre');
-    final correo = prefs.getString('correo');
-    final rol = prefs.getString('rol');
 
-    if (token != null && nombre != null && correo != null && rol != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => HomeScreen(
-            nombre: nombre,
-            correo: correo,
-            rol: rol,
-            cargo: prefs.getString('cargo') ?? '',
-          ),
-        ),
-      );
-    } else {
+    if (token != null) {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomeScreen(),
+    ),
+  );
+} else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
