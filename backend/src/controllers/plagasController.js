@@ -8,7 +8,8 @@ function obtenerPlagas(req, res) {
         return db.query(`
             SELECT
                 p.*,
-                c.tipo_cultivo
+                c.tipo_cultivo,
+                c.variedad
             FROM plaga p
             LEFT JOIN cultivo c
                 ON p.id_cultivo = c.id_cultivo
@@ -29,7 +30,8 @@ function obtenerPlagas(req, res) {
     db.query(`
         SELECT
             p.*,
-            c.tipo_cultivo
+            c.tipo_cultivo,
+            c.variedad
         FROM plaga p
         INNER JOIN cultivo c
             ON p.id_cultivo = c.id_cultivo
@@ -98,6 +100,60 @@ function crearPlaga(req, res) {
     });
 }
 
+// PUT
+function actualizarPlaga(req, res) {
+
+    const {
+        id_cultivo,
+        tipo_plaga,
+        tratamiento,
+        cantidad_aplicada,
+        unidad,
+        hectareas_fumigadas
+    } = req.body;
+
+    db.query(
+        `
+        UPDATE plaga
+        SET
+            id_cultivo = ?,
+            tipo_plaga = ?,
+            tratamiento = ?,
+            cantidad_aplicada = ?,
+            unidad = ?,
+            hectareas_fumigadas = ?
+        WHERE id_plaga = ?
+        `,
+        [
+            id_cultivo,
+            tipo_plaga,
+            tratamiento,
+            cantidad_aplicada,
+            unidad,
+            hectareas_fumigadas,
+            req.params.id
+        ],
+        (err, result) => {
+
+            if (err) {
+                return res.status(500).json({
+                    error: err.message
+                });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    error: 'Registro no encontrado'
+                });
+            }
+
+            return res.json({
+                message: 'Registro actualizado'
+            });
+        }
+    );
+}
+
 // DELETE
 function eliminarPlaga(req, res) {
 
@@ -123,5 +179,6 @@ function eliminarPlaga(req, res) {
 module.exports = {
     obtenerPlagas,
     crearPlaga,
+    actualizarPlaga,
     eliminarPlaga
 };

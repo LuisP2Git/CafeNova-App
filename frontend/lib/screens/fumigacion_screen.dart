@@ -93,7 +93,7 @@ class _FumigacionScreenState
 
     final response = await http.get(
       Uri.parse(
-        'http://localhost:3000/cultivos',
+        'http://localhost:3000/cultivo',
       ),
       headers: {
         'Authorization':
@@ -290,6 +290,9 @@ class _FumigacionScreenState
       idEditando =
           plaga['id_plaga'];
 
+      cultivoSeleccionado =
+          plaga['id_cultivo'];
+
       tipoPlagaController.text =
           plaga['tipo_plaga'];
 
@@ -334,7 +337,7 @@ class _FumigacionScreenState
 
                 DropdownButtonFormField<int>(
 
-                  value:
+                  initialValue:
                       cultivoSeleccionado,
 
                   decoration:
@@ -357,9 +360,7 @@ class _FumigacionScreenState
                                 'id_cultivo'],
 
                         child: Text(
-                          cultivo[
-                                  'tipo_cultivo'] ??
-                              'Cultivo',
+                          '${cultivo['tipo_cultivo']} - ${cultivo['variedad']}',
                         ),
                       );
                     },
@@ -421,7 +422,7 @@ class _FumigacionScreenState
                 DropdownButtonFormField<
                     String>(
 
-                  value:
+                  initialValue:
                       unidadSeleccionada,
 
                   decoration:
@@ -642,20 +643,67 @@ class _FumigacionScreenState
 
             const Divider(),
 
-            Text(
-              'Tratamiento: ${item['tratamiento']}',
+            Text('${item['tipo_cultivo']} - ${item['variedad']}',
+            style: const TextStyle(color: Colors.black54,fontWeight: FontWeight.w500,),
             ),
 
-            Text(
-              'Cantidad: ${item['cantidad_aplicada']} ${item['unidad']}',
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+
+                const Icon(
+                  Icons.medication_outlined,
+                  size: 16,
+                  color: Color(0xFF6B7F66),
+                ),
+
+                const SizedBox(width: 6),
+
+                Expanded(
+                  child: Text(
+                    item['tratamiento'],
+                  ),
+                ),
+              ],
             ),
 
-            Text(
-              'Hectáreas: ${item['hectareas_fumigadas']}',
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+
+                const Icon(
+                  Icons.science_outlined,
+                  size: 16,
+                  color: Color(0xFF6B7F66),
+                ),
+
+                const SizedBox(width: 6),
+
+                Text(
+                  '${item['cantidad_aplicada']} ${item['unidad']}',
+                ),
+              ],
             ),
 
-            Text(
-              'Fecha: ${item['fecha_registro']}',
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+
+                const Icon(
+                  Icons.crop_square,
+                  size: 16,
+                  color: Color(0xFF6B7F66),
+                ),
+
+                const SizedBox(width: 6),
+
+                Text(
+                  '${item['hectareas_fumigadas']} ha',
+                ),
+              ],
             ),
           ],
         ),

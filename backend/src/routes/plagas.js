@@ -9,6 +9,7 @@ const {
 const {
     obtenerPlagas,
     crearPlaga,
+    actualizarPlaga,
     eliminarPlaga
 } = require('../controllers/plagasController');
 
@@ -23,6 +24,11 @@ router.post(
     verificarToken,
     crearPlaga
 );
+
+router.put(
+    '/:id', 
+    verificarToken, 
+    actualizarPlaga);
 
 router.delete(
     '/:id',
