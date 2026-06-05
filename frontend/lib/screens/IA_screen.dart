@@ -66,16 +66,28 @@ setState(() {
   final historial = data['historial'] ?? [];
 
   for (var item in historial) {
+
+  if (item['tipo'] == 'imagen') {
+
+    mensajes.add({
+      'tipo': 'user',
+      'esImagen': true,
+      'imagen': item['imagen'],
+    });
+
+  } else {
+
     mensajes.add({
       'tipo': 'user',
       'texto': item['mensaje'],
     });
-
-    mensajes.add({
-      'tipo': 'ia',
-      'texto': item['respuesta'],
-    });
   }
+
+  mensajes.add({
+    'tipo': 'ia',
+    'texto': item['respuesta'],
+  });
+}
 });
       _scrollAbajo();
     } catch (e) {
@@ -368,25 +380,31 @@ Responde en español, de forma estructurada, clara y práctica.''';
                     offset: Offset(0, 1))
               ],
             ),
-            child: MarkdownBody(
-              data: msg['texto'] ?? '',
-              styleSheet: MarkdownStyleSheet(
-                p: TextStyle(
-                  fontSize: 14,
-                  color: esUsuario ? Colors.white : Colors.black87,
-                ),
-                strong: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: esUsuario ? Colors.white : Colors.black,
-                ),
-                code: TextStyle(
-                  backgroundColor: esUsuario
-                      ? Colors.white24
-                      : Colors.grey.shade200,
-                  fontSize: 12,
-                ),
-              ),
-            ),
+            child: msg['esImagen'] == true
+    ? ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.memory(
+          base64Decode(msg['imagen']),
+          fit: BoxFit.cover,
+        ),
+      )
+    : MarkdownBody(
+        data: msg['texto'] ?? '',
+        styleSheet: MarkdownStyleSheet(
+          p: TextStyle(
+            fontSize: 14,
+            color: esUsuario
+                ? Colors.white
+                : Colors.black87,
+          ),
+          strong: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: esUsuario
+                ? Colors.white
+                : Colors.black,
+          ),
+        ),
+      ),
           ),
           if (esUsuario) ...[
             const SizedBox(width: 8),

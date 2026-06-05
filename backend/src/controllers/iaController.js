@@ -63,23 +63,29 @@ Debes responder:
         // Guardar historial si existe usuario
         if (id_usuario) {
 
-            db.query(
-                `
-                INSERT INTO ia_mensajes
-                (id_usuario, mensaje, respuesta)
-                VALUES (?, ?, ?)
-                `,
-                [id_usuario, pregunta, respuesta],
-                (err) => {
-                    if (err) {
-                        console.log(
-                            'ERROR GUARDANDO HISTORIAL:',
-                            err.message
-                        );
-                    }
-                }
-            );
+    db.query(
+        `
+        INSERT INTO ia_mensajes
+(id_usuario, mensaje, respuesta, tipo, imagen)
+VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+            id_usuario,
+            pregunta,
+            respuesta,
+            'chat',
+            null
+        ],
+        (err) => {
+            if (err) {
+                console.log(
+                    'ERROR GUARDANDO HISTORIAL:',
+                    err.message
+                );
+            }
         }
+    );
+}
 
         return res.json({
             success: true,
@@ -179,6 +185,8 @@ function historialIA(req, res) {
 
 async function analizarImagenIA(req, res) {
 
+    const id_usuario = req.usuario?.id_usuario;
+
     try {
 
         const {
@@ -238,6 +246,33 @@ Responde en español.
         const response = await result.response;
 
         const texto = response.text();
+
+if (id_usuario) {
+
+    db.query(
+        `
+        INSERT INTO ia_mensajes
+(id_usuario, mensaje, respuesta, tipo, imagen)
+VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+            id_usuario,
+            promptFinal,
+            texto,
+            'imagen',
+            imagen_base64
+        ],
+        (err) => {
+
+            if (err) {
+                console.log(
+                    'ERROR GUARDANDO HISTORIAL IA IMAGEN:',
+                    err.message
+                );
+            }
+        }
+    );
+}
 
         return res.json({
             success: true,
