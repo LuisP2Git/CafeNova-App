@@ -324,7 +324,6 @@ router.get('/por-finca', verificarToken, async (req, res) => {
 
     res.json(resultado);
   } catch (error) {
-    console.error('GET /por-finca', error);
 
     res.status(500).json({
       error: 'Error por finca',
@@ -459,7 +458,6 @@ router.post('/', verificarToken, async (req, res) => {
       id_reporte: result.insertId,
     });
   } catch (error) {
-    console.error('POST /reportes', error);
 
     res.status(500).json({
       error: 'Error guardando reporte',

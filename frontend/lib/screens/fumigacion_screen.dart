@@ -20,13 +20,25 @@ class FumigacionScreen extends StatefulWidget {
 }
 
 class _FumigacionScreenState
-    extends State<FumigacionScreen> {
+extends State<FumigacionScreen> {
+  String rol = '';
+String cargo = '';
+
+Future<void> cargarSesion() async {
+  final datos = await SessionService.getDatosSesion();
+
+  if (!mounted) return;
+
+  setState(() {
+    rol = datos['rol'] ?? '';
+    cargo = datos['cargo'] ?? '';
+  });
+}
 
   String? token;
 
   String nombreUsuario = '';
   String correo = '';
-  String rol = '';
 
   List plagas = [];
   List cultivos = [];
@@ -60,6 +72,7 @@ class _FumigacionScreenState
   @override
   void initState() {
     super.initState();
+    cargarSesion();
     init();
   }
 
@@ -507,39 +520,61 @@ class _FumigacionScreenState
 
   void _onItemTapped(int index) {
 
-    if (index == 1) return;
+  final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
 
-    if (index == 0) {
+  if (index == 1) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              const HomeScreen(),
-        ),
-      );
+  if (index == 0) {
 
-    } else if (index == 2) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen(),
+      ),
+    );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              const ReportesScreen(),
-        ),
-      );
+    return;
+  }
 
-    } else if (index == 3) {
+  if (puedeVerReportes) {
+
+    if (index == 2) {
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              const ProfileScreen(),
+          builder: (_) => const ReportesScreen(),
+        ),
+      );
+
+      return;
+    }
+
+    if (index == 3) {
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
+
+  } else {
+
+    if (index == 2) {
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
         ),
       );
     }
   }
+}
 
   Widget plagaCard(Map item) {
 
@@ -945,13 +980,13 @@ Container(
         ),
       ),
 
-      bottomNavigationBar:
-          AppBottomNav(
-        currentIndex:
-            _selectedIndex,
-        onTabSelected:
-            _onItemTapped,
-      ),
+      bottomNavigationBar: AppBottomNav(
+  currentIndex: _selectedIndex,
+  onTabSelected: _onItemTapped,
+  puedeVerReportes:
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo',
+),
     );
   }
 }

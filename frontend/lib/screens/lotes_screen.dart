@@ -6,6 +6,7 @@ import 'package:frontend/services/session_service.dart';
 import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 import 'package:frontend/screens/profile_screen.dart';
+import 'package:frontend/screens/home_screen.dart';
 
 class LotesScreen extends StatefulWidget {
 
@@ -17,6 +18,19 @@ class LotesScreen extends StatefulWidget {
 
 class _LotesScreenState extends State<LotesScreen> {
   String nombreUsuario = '';
+  String rol = '';
+String cargo = '';
+
+Future<void> cargarSesion() async {
+  final datos = await SessionService.getDatosSesion();
+
+  if (!mounted) return;
+
+  setState(() {
+    rol = datos['rol'] ?? '';
+    cargo = datos['cargo'] ?? '';
+  });
+}
 
   List lotes = [];
   List fincas = [];
@@ -44,13 +58,12 @@ class _LotesScreenState extends State<LotesScreen> {
 
   String? token;
   String correo = '';
-  String rol = '';
-
   final int _selectedIndex = 1;
 
   @override
   void initState() {
   super.initState();
+  cargarSesion();
   init();
 }
 
@@ -293,26 +306,70 @@ class _LotesScreenState extends State<LotesScreen> {
     );
   }
 
-  void _onItemTapped(int index) {
-    if (index == 1) return;
-    if (index == 0) {
-      Navigator.pop(context);
-      } else if (index == 2) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const ReportesScreen(),
-            ),
-          );
-    } else if (index == 3) {
+  void _onItemTapped(int index) async {
+
+  final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
+
+  if (index == 0) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomeScreen(),
+    ),
+    (route) => false,
+  );
+  return;
+}
+
+  if (!mounted) return;
+
+  if (index == 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LotesScreen(),
+      ),
+    );
+    return;
+  }
+
+  if (puedeVerReportes) {
+
+    if (index == 2) {
       Navigator.push(
         context,
-          MaterialPageRoute(
+        MaterialPageRoute(
+          builder: (_) => const ReportesScreen(),
+        ),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
+
+  } else {
+
+    // Para usuarios sin acceso a reportes,
+    // el índice 2 es Perfil.
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
           builder: (_) => const ProfileScreen(),
         ),
       );
     }
   }
+}
 
   Widget loteCard(Map lote) {
     return GestureDetector(
@@ -444,9 +501,12 @@ class _LotesScreenState extends State<LotesScreen> {
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedIndex,
-        onTabSelected: _onItemTapped,
-      ),
+  currentIndex: _selectedIndex,
+  onTabSelected: _onItemTapped,
+  puedeVerReportes:
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo',
+),
     );
   }
 }

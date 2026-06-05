@@ -143,9 +143,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> irAReportes() async {
-    await Navigator.push(context,
-        MaterialPageRoute(builder: (_) => const ReportesScreen()));
+
+  if (!(rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo')) {
+
+    Mensajes.mostrar(
+      context,
+      'No tienes permisos para acceder a reportes',
+      esError: true,
+    );
+
+    return;
   }
+
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const ReportesScreen(),
+    ),
+  );
+}
 
   Future<void> irACosechas() async {
     await Navigator.push(context,
@@ -168,30 +185,60 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 0) return; // ya estás en home
-    if (index == 1) { irALotes(); return; }
-    if (index == 2) { irAReportes(); return; }
+  final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
+
+  if (index == 0) return;
+
+  if (index == 1) {
+    irALotes();
+    return;
+  }
+
+  if (puedeVerReportes) {
+    if (index == 2) {
+      irAReportes();
+      return;
+    }
+
     if (index == 3) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => 
-          const ProfileScreen()
-          )
-        );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
+  } else {
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
     final Color rolColor = rol == 'admin' ? Colors.green : Colors.blue;
     final cargoActual = cargo;
+    final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F1ED),
       // ✅ Widget reutilizable
       bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedIndex,
-        onTabSelected: _onItemTapped,
-      ),
+  currentIndex: _selectedIndex,
+  onTabSelected: _onItemTapped,
+  puedeVerReportes: puedeVerReportes,
+),
       body: Column(
         children: [
           Container(
@@ -281,12 +328,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (cargo == 'Recolector')
                         _dashCard('Cosechas', Icons.agriculture, irACosechas),
-                      if (cargo == 'Pesador')
-                        _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (cargo == 'Operario de Procesamiento')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
-                      if (cargo == 'Operario de Procesamiento')
-                        _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (rol == 'admin')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (rol == 'admin' || cargo == 'Auxiliar Administrativo' ||cargo == 'Fumigador')

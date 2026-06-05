@@ -16,6 +16,8 @@ class ReportesScreen extends StatefulWidget {
 }
 
 class _ReportesScreenState extends State<ReportesScreen>
+
+
     with SingleTickerProviderStateMixin {
   // ─── helpers ───────────────────────────────────────────────────────────────
   static const _meses = {
@@ -77,6 +79,7 @@ class _ReportesScreenState extends State<ReportesScreen>
   String nombre = '';
   String correo = '';
   String rol = '';
+  String cargo = '';
   bool cargando = true;
 
   late TabController _tabController;
@@ -272,6 +275,7 @@ List get _resumenCalidad {
     nombre = datos['nombre'] ?? '';
     correo = datos['correo'] ?? '';
     rol = datos['rol'] ?? '';
+    cargo = datos['cargo'] ?? '';
     if (token == null) return;
     await cargarDatos();
   }
@@ -397,37 +401,68 @@ List get _resumenCalidad {
   }
 
   // FIX #5 — Navegación corregida: siempre pushAndRemoveUntil hacia Inicio
-  void _onItemTapped(int index) {
-  if (index == _selectedIndex) return;
+  void _onItemTapped(int index) async {
 
-  switch (index) {
-    case 0:
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
-        (route) => false,
-      );
-      break;
+  final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
 
-    case 1:
+  if (index == 0) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomeScreen(),
+    ),
+    (route) => false,
+  );
+  return;
+}
+
+  if (!mounted) return;
+
+  if (index == 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LotesScreen(),
+      ),
+    );
+    return;
+  }
+
+  if (puedeVerReportes) {
+
+    if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => const LotesScreen(),
+          builder: (_) => const ReportesScreen(),
         ),
       );
-      break;
+      return;
+    }
 
-    case 3:
+    if (index == 3) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => const ProfileScreen(),
         ),
       );
-      break;
+    }
+
+  } else {
+
+    // Para usuarios sin acceso a reportes,
+    // el índice 2 es Perfil.
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
   }
 }
 
@@ -468,9 +503,12 @@ List get _resumenCalidad {
         ],
       ),
       bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedIndex,
-        onTabSelected: _onItemTapped,
-      ),
+  currentIndex: _selectedIndex,
+  onTabSelected: _onItemTapped,
+  puedeVerReportes:
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo',
+),
     );
   }
 

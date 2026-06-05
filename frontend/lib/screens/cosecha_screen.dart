@@ -7,17 +7,33 @@ import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/screens/profile_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
+import 'package:frontend/screens/home_screen.dart';
 
 const _calidadesCosecha = ['Premium', 'Alta', 'Media', 'Baja'];
 
 class CosechaScreen extends StatefulWidget {
+  
   const CosechaScreen({super.key});
+  
 
   @override
   State<CosechaScreen> createState() => _CosechaScreenState();
 }
 
 class _CosechaScreenState extends State<CosechaScreen> {
+  String rol = '';
+String cargo = '';
+
+Future<void> cargarSesion() async {
+  final datos = await SessionService.getDatosSesion();
+
+  if (!mounted) return;
+
+  setState(() {
+    rol = datos['rol'] ?? '';
+    cargo = datos['cargo'] ?? '';
+  });
+}
   List cosechas = [];
   List cultivos = [];
 
@@ -37,6 +53,7 @@ class _CosechaScreenState extends State<CosechaScreen> {
   @override
   void initState() {
     super.initState();
+    cargarSesion();
     _init();
   }
 
@@ -344,39 +361,66 @@ class _CosechaScreenState extends State<CosechaScreen> {
 
   void _onItemTapped(int index) async {
 
+  final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
+
   if (index == 0) {
-    Navigator.pop(context);
-    return;
-  }
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomeScreen(),
+    ),
+    (route) => false,
+  );
+  return;
+}
 
   if (!mounted) return;
 
   if (index == 1) {
-
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => const LotesScreen(),
       ),
     );
+    return;
+  }
 
-  } else if (index == 2) {
+  if (puedeVerReportes) {
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ReportesScreen(),
-      ),
-    );
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ReportesScreen(),
+        ),
+      );
+      return;
+    }
 
-  } else if (index == 3) {
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ProfileScreen(),
-      ),
-    );
+  } else {
+
+    // Para usuarios sin acceso a reportes,
+    // el índice 2 es Perfil.
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
   }
 }
 
@@ -521,10 +565,12 @@ class _CosechaScreenState extends State<CosechaScreen> {
         child: const Icon(Icons.add),
       ),
       // ✅ Barra de navegación global reutilizable
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedIndex,
-        onTabSelected: _onItemTapped,
-      ),
+      bottomNavigationBar:AppBottomNav(
+  currentIndex: _selectedIndex,
+  onTabSelected: _onItemTapped,
+  puedeVerReportes: rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo',
+)
     );
   }
 }

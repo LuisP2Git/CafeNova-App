@@ -4,6 +4,7 @@ import 'package:frontend/services/session_service.dart';
 import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
+import 'package:frontend/screens/home_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
 
@@ -14,7 +15,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final int _selectedIndex = 3;
+  int get selectedIndex {
+  final puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
+
+  return puedeVerReportes ? 3 : 2;
+}
   bool _pressed = false;
   String nombre = '';
   String correo = '';
@@ -48,24 +55,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _onItemTapped(int index) {
-    if (index == 3) return;
-    if (index == 0) {
-      Navigator.pop(context);
-      } else if (index == 1) {
-        Navigator.push(
-          context,
-        MaterialPageRoute(
-          builder: (_) => const LotesScreen(),
-          ),
-        );
-      } else if (index == 2) {
+  void _onItemTapped(int index) async {
+
+  final bool puedeVerReportes =
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo';
+
+  if (index == 0) {
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const HomeScreen(),
+    ),
+    (route) => false,
+  );
+  return;
+}
+
+  if (!mounted) return;
+
+  if (index == 1) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const ReportesScreen(),
+        builder: (_) => const LotesScreen(),
       ),
     );
+    return;
+  }
+
+  if (puedeVerReportes) {
+
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ReportesScreen(),
+        ),
+      );
+      return;
+    }
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
+
+  } else {
+
+    // Para usuarios sin acceso a reportes,
+    // el índice 2 es Perfil.
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
+        ),
+      );
+    }
   }
 }
 
@@ -216,9 +267,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
 
       bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedIndex,
-        onTabSelected: _onItemTapped,
-      ),
+  currentIndex: selectedIndex,
+  onTabSelected: _onItemTapped,
+  puedeVerReportes:
+      rol == 'admin' ||
+      cargo == 'Auxiliar Administrativo',
+),
     );
   }
 
