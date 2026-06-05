@@ -5,6 +5,7 @@ import 'package:frontend/screens/employees_screen.dart';
 import 'package:frontend/screens/reportes_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:frontend/screens/login_screen.dart';
 import 'package:frontend/screens/finca_screen.dart';
 import 'package:frontend/screens/lotes_screen.dart';
@@ -15,6 +16,7 @@ import 'package:frontend/services/session_service.dart';
 import 'package:frontend/screens/cultivos_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 import 'package:frontend/screens/fumigacion_screen.dart';
+import 'package:frontend/screens/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -45,6 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int idEmpleado = 0;
 
   String correoResuelto = '';
+
+  int mensajesNoLeidos = 0;
+  Timer? timerMensajes;
 
   Future<void> cargarSesion() async {
 
@@ -104,6 +109,13 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     await obtenerLotes();
+
+    await obtenerMensajesNoLeidos();
+
+    timerMensajes = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => obtenerMensajesNoLeidos(),
+    );
   }
 
   Future<void> obtenerLotes() async {
@@ -117,6 +129,35 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (_) {}
   }
+
+  Future<void> obtenerMensajesNoLeidos() async {
+
+  try {
+
+    final response = await http.get(
+      Uri.parse(
+        'http://localhost:3000/chat/no-leidos',
+      ),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+
+      final data =
+          jsonDecode(response.body);
+
+      if (!mounted) return;
+
+      setState(() {
+        mensajesNoLeidos =
+            data['total'] ?? 0;
+      });
+    }
+
+  } catch (_) {}
+}
 
   Future<void> irALotes() async {
     await Navigator.push(context,
@@ -221,6 +262,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 }
+
+  @override
+    void dispose() {
+    timerMensajes?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -336,8 +383,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Fumigación', Icons.bug_report, irAFumigacion,),
                       if (rol == 'admin')
                         _dashCard('Cosechas', Icons.agriculture, irACosechas),
-                      
                         _dashCard('IA', Icons.psychology, irAIA),
+                        _dashCard(
+                          'Chat',
+                          Icons.chat,
+                          () async {
+
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ChatScreen(),
+                              ),
+                            );
+
+                            obtenerMensajesNoLeidos();
+                          },
+                          badge: mensajesNoLeidos,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -384,27 +446,84 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _dashCard(String titulo, IconData icono, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 3, offset: Offset(0, 2))
-          ],
-        ),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icono, size: 35, color: const Color(0xFF6B7F66)),
-          const SizedBox(height: 8),
-          Text(titulo, style: const TextStyle(fontWeight: FontWeight.w500)),
-        ]),
+  Widget _dashCard(
+  String titulo,
+  IconData icono,
+  VoidCallback onTap, {
+  int badge = 0,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 3,
+            offset: Offset(0, 2),
+          )
+        ],
       ),
-    );
-  }
+      child: Stack(
+        children: [
 
+          Center(
+            child: Column(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icono,
+                  size: 35,
+                  color: const Color(0xFF6B7F66),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontWeight:
+                        FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          if (badge > 0)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration:
+                    const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  badge > 99
+                      ? '99+'
+                      : badge.toString(),
+                  style:
+                      const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
   Widget _loteItem(String nombre, String finca) {
     return GestureDetector(
       onTap: irALotes,

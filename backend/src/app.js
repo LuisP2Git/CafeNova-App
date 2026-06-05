@@ -13,6 +13,7 @@ const usuariosRoutes = require('./routes/usuarios');
 const iaRoutes       = require('./routes/ia');
 const inventarioRoutes = require('./routes/inventario');
 const plagasRoutes = require('./routes/plagas');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/empleados', empleadosRoutes);
 app.use('/usuarios',  usuariosRoutes);
 app.use('/inventario', inventarioRoutes);
 app.use('/plagas', plagasRoutes);
+app.use('/chat',     chatRoutes);
 app.use('/',          iaRoutes);       // /ia y /ia/historial
 
 module.exports = app;

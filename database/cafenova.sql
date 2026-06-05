@@ -165,7 +165,7 @@ CREATE TABLE cosecha (
         ON UPDATE CASCADE
 );
 
--- 9. PLAGA
+-- 9. PLAGA (CON LAS NUEVAS COLUMNAS INCORPORADAS)
 CREATE TABLE plaga (
     id_plaga INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -174,6 +174,11 @@ CREATE TABLE plaga (
     tipo_plaga VARCHAR(255),
     tratamiento TEXT,
     fecha_registro DATE,
+    
+    -- Nuevos campos agregados aquí:
+    cantidad_aplicada DECIMAL(10,2),
+    unidad VARCHAR(20),
+    hectareas_fumigadas DECIMAL(10,2),
 
     FOREIGN KEY (id_cultivo)
         REFERENCES cultivo(id_cultivo)
@@ -256,4 +261,23 @@ CREATE TABLE ia_mensajes (
 
     FOREIGN KEY (id_usuario)
         REFERENCES usuarios(id_usuario)
+);
+
+-- 14. CHAT
+CREATE TABLE chat_mensajes (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+
+    id_remitente INT NOT NULL,
+    id_destinatario INT NOT NULL,
+
+    mensaje TEXT NOT NULL,
+    fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    leido TINYINT(1) DEFAULT 0,
+
+    FOREIGN KEY (id_remitente)
+        REFERENCES empleado(id_empleado),
+
+    FOREIGN KEY (id_destinatario)
+        REFERENCES empleado(id_empleado)
 );
