@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final usuarioController = TextEditingController();
   final passwordController = TextEditingController();
+  bool _mostrarPassword = false;
 
   Future<void> login() async {
     final url = Uri.parse('http://localhost:3000/login');
@@ -172,20 +173,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         SizedBox(height: spacingMedium),
 
-                        TextField(
-                          controller: passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            hintText: "Contraseña",
-                            filled: true,
-                            fillColor: Colors.grey.shade200,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-
+                      TextField(
+                        controller: passwordController,
+  obscureText: !_mostrarPassword,
+  decoration: InputDecoration(
+    hintText: "Contraseña",
+    filled: true,
+    fillColor: Colors.grey.shade200,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    suffixIcon: IconButton(
+      icon: Icon(
+        _mostrarPassword
+            ? Icons.visibility
+            : Icons.visibility_off,
+      ),
+      onPressed: () {
+        setState(() {
+          _mostrarPassword = !_mostrarPassword;
+        });
+      },
+    ),
+  ),
+),
                         SizedBox(height: spacingLarge),
 
                         SizedBox(

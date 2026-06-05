@@ -28,6 +28,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   
   String? cargoSeleccionado;
 
+
+  bool _mostrarPassword = false;
+  bool _mostrarConfirmPassword = false;
   bool esPasswordSegura(String password) {
   final regex = RegExp(
     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._#])[A-Za-z\d@$!%*?&._#]{8,}$',
@@ -248,33 +251,63 @@ final List<String> cargos = [
     );
   }
 
-  Widget campo(
-    TextEditingController controller,
-    String hint, {
-    bool obscure = false,
-    TextInputType keyboard = TextInputType.text,
-    int? maxLength,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscure,
-        keyboardType: keyboard,
-        maxLength: maxLength,
-        inputFormatters: inputFormatters,
-        decoration: InputDecoration(
-          hintText: hint,
-          filled: true,
-          fillColor: Colors.grey.shade200,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-    );
-  }
-}
+Widget campo(
+  TextEditingController controller,
+  String hint, {
+  bool obscure = false,
+  TextInputType keyboard = TextInputType.text,
+  int? maxLength,
+  List<TextInputFormatter>? inputFormatters,
+}) {
+  bool esPassword =
+      controller == passwordController ||
+      controller == confirmPasswordController;
 
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextFormField(
+      controller: controller,
+      obscureText: esPassword
+          ? (controller == passwordController
+              ? !_mostrarPassword
+              : !_mostrarConfirmPassword)
+          : false,
+      keyboardType: keyboard,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.grey.shade200,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: esPassword
+            ? IconButton(
+                icon: Icon(
+                  controller == passwordController
+                      ? (_mostrarPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off)
+                      : (_mostrarConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (controller == passwordController) {
+                      _mostrarPassword = !_mostrarPassword;
+                    } else {
+                      _mostrarConfirmPassword =
+                          !_mostrarConfirmPassword;
+                    }
+                  });
+                },
+              )
+            : null,
+      ),
+    ),
+  );
+}
+}
