@@ -275,8 +275,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         _dashCard('Reportes', Icons.bar_chart, irAReportes,),
                       if (cargo == 'Auxiliar Administrativo')
                         _dashCard('Inventario', Icons.inventory, () {Navigator.push(context, MaterialPageRoute(builder: (_) =>const InventarioScreen(),),);},),
-                      if (rol == 'admin' || cargo == 'Auxiliar Administrativo' ||cargo == 'Fumigador')
-                      _dashCard('Fumigación', Icons.bug_report, irAFumigacion,),
                       if (rol != 'admin' && cargo == 'Operario de Campo')
                         _dashCard('Cultivos', Icons.spa, irACultivos),
                       if (cargoActual == 'Fumigador')
@@ -290,7 +288,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (cargo == 'Operario de Procesamiento')
                         _dashCard('Reportes', Icons.bar_chart, irAReportes),
                       if (rol == 'admin')
-                        _dashCard('Cultivos', Icons.agriculture, irACultivos),
+                        _dashCard('Cultivos', Icons.spa, irACultivos),
+                      if (rol == 'admin' || cargo == 'Auxiliar Administrativo' ||cargo == 'Fumigador')
+                        _dashCard('Fumigación', Icons.bug_report, irAFumigacion,),
                       if (rol == 'admin')
                         _dashCard('Cosechas', Icons.agriculture, irACosechas),
                       

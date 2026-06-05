@@ -481,10 +481,10 @@ class _FumigacionScreenState
           actions: [
 
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-              ),
+              onPressed: () {
+                limpiarCampos();
+                Navigator.pop(context);
+              },
               child:
                   const Text(
                 'Cancelar',
@@ -610,17 +610,31 @@ class _FumigacionScreenState
 
                 Expanded(
                   child: Text(
-                    item[
-                        'tipo_plaga'],
-                    style:
-                        const TextStyle(
-                      fontWeight:
-                          FontWeight
-                              .bold,
+                    item['tipo_plaga'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                 ),
+
+Container(
+  padding: const EdgeInsets.symmetric(
+    horizontal: 10,
+    vertical: 5,
+  ),
+  decoration: BoxDecoration(
+    color: const Color(0xFFE3F2E1),
+    borderRadius: BorderRadius.circular(20),
+  ),
+  child: Text(
+    item['tipo_cultivo'] ?? '',
+    style: const TextStyle(
+      fontSize: 12,
+      color: Color(0xFF2E7D32),
+    ),
+  ),
+),
 
                 IconButton(
                   icon:
@@ -702,6 +716,26 @@ class _FumigacionScreenState
 
                 Text(
                   '${item['hectareas_fumigadas']} ha',
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+
+                const Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: Color(0xFF6B7F66),
+                ),
+
+                const SizedBox(width: 6),
+
+                Text(
+                  '${DateTime.parse(item['fecha_registro']).day}/'
+                  '${DateTime.parse(item['fecha_registro']).month}/'
+                  '${DateTime.parse(item['fecha_registro']).year}',
                 ),
               ],
             ),
