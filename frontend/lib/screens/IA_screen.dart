@@ -232,7 +232,7 @@ Responde en español, de forma estructurada, clara y práctica.''';
     }    
     setState(() => _analizandoImagen = false);
   }
-
+                                                                              
   // ─── UI ────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {

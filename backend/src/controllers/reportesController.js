@@ -513,31 +513,34 @@ function generarPDF(req, res) {
             // TITULO
             // =========================
 
-            let y = 140;
+            let y = 150;
 
-            doc.fillColor('#222')
-                .fontSize(22)
-                .font('Helvetica-Bold')
-                .text(
-                    'Reporte General de Producción',
-                    40,
-                    y
-                );
+doc.fillColor('#222')
+   .fontSize(22)
+   .font('Helvetica-Bold')
+   .text(
+      'Reporte General de Producción',
+      40,
+      y,
+      {
+         align: 'center'
+      }
+   );
 
-            y += 40;
+y += 70;
 
             // =========================
             // RESUMEN EJECUTIVO
             // =========================
 
             doc.roundedRect(
-                40,
-                y,
-                515,
-                80,
-                10
-            )
-            .fill('#F5F8F5');
+    40,
+    y,
+    515,
+    100,
+    10
+)
+.fill('#F5F8F5');
 
             doc.fillColor('#2E7D32')
                 .fontSize(14)
@@ -560,7 +563,7 @@ function generarPDF(req, res) {
                     }
                 );
 
-            y += 110;
+            y += 130;
 
             // =========================
             // KPI PRODUCCION
@@ -689,34 +692,60 @@ function generarPDF(req, res) {
                     );
 
                 doc.text(
-                    `${item.total_kg} kg`,
-                    320,
-                    y + 8
-                );
+    `${item.total_kg} kg`,
+    320,
+    y + 8
+);
 
-                y += 28;
+y += 28;
 
-                if (y > 700) {
+if (y > 700) {
 
-                    doc.addPage();
+    doc.addPage();
 
-                    y = 60;
-                }
+    y = 60;
+
+    doc.rect(
+        40,
+        y,
+        515,
+        30
+    )
+    .fill('#2E7D32');
+
+    doc.fillColor('white')
+        .fontSize(11)
+        .font('Helvetica-Bold')
+        .text('Fecha', 60, y + 9);
+
+    doc.text(
+        'Producción (kg)',
+        320,
+        y + 9
+    );
+
+    y += 40;
+}
             });
 
             // =========================
             // RESUMEN FINAL
             // =========================
 
+if (y + 90 > 700) {
+    doc.addPage();
+    y = 60;
+}
+
             y += 20;
 
             doc.roundedRect(
-                40,
-                y,
-                515,
-                70,
-                10
-            )
+    40,
+    y,
+    515,
+    100,
+    10
+)
             .fill('#E8F5E9');
 
             doc.fillColor('#1B5E20')

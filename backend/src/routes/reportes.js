@@ -523,7 +523,7 @@ const mensual =
 
     const chartCanvas = new ChartJSNodeCanvas({
       width: 700,
-      height: 350,
+      height: 220,
     });
 
     const image = await chartCanvas.renderToBuffer({
@@ -558,7 +558,7 @@ const mensual =
 
     doc.pipe(res);
 
-doc.moveDown(5);
+doc.moveDown(2);
 
 // TITULO
 
@@ -597,14 +597,13 @@ doc
     }
   );
 
-doc.moveDown(2);
-
+const resumenY = doc.y + 10;
 
 // TARJETA RESUMEN
 
 doc.roundedRect(
   40,
-  180,
+  resumenY,
   520,
   110,
   12
@@ -617,7 +616,7 @@ doc.fillColor('#4E5E4A')
    .text(
       'Resumen General',
       60,
-      200
+      resumenY + 20
    );
 
 doc.fillColor('#333')
@@ -626,13 +625,14 @@ doc.fillColor('#333')
    .text(
       `Fecha: ${new Date().toLocaleDateString()}`,
       60,
-      230
+      resumenY + 50 
    );
 
 doc.text(
   `Meses analizados: ${mensual.length}`,
+
   60,
-  270
+resumenY + 90
 );
 
 if (fincaId) {
@@ -667,17 +667,17 @@ doc
 doc.moveDown();
 
 doc.image(image, {
-  width: 520,
+  width: 400,
   align: 'center',
 });
 
-doc.moveDown();
+doc.moveDown(0.5);
 
 doc.moveTo(40, 320)
    .lineTo(550, 320)
    .stroke('#6B7F66');
 
-    doc.moveDown(2);
+doc.moveDown(1);
 
 doc
   .fontSize(16)
@@ -685,7 +685,7 @@ doc
   .font('Helvetica-Bold')
   .text('Detalle de Producción');
 
-    let y = doc.y + 10;
+let y = Math.min(doc.y + 10, 650);
 
 doc.rect(
   40,
@@ -748,7 +748,33 @@ mensual.forEach((m, index) => {
 
   y += 28;
 });
-    doc.moveDown(3);
+    doc.y = y + 20;
+
+doc
+  .fillColor('#4E5E4A')
+  .fontSize(14)
+  .font('Helvetica-Bold')
+  .text(
+    'Conclusión',
+    40,
+    doc.y
+  );
+
+doc.moveDown();
+
+doc
+  .fillColor('#444')
+  .fontSize(11)
+  .font('Helvetica')
+  .text(
+    `Durante el periodo analizado se registró una producción total de ${totalKg.toFixed(1)} KG. La información presentada corresponde a los registros almacenados en CafeNova y permite evaluar el comportamiento productivo de los cultivos gestionados.`,
+    40,
+    doc.y,
+    {
+      width: 500,
+      align: 'left'
+    }
+  );
 
 doc.fillColor('#888')
    .fontSize(9);
@@ -774,23 +800,9 @@ doc.text(
   }
 );
 
-doc.moveDown(3);
+doc.moveDown(1);
 
-doc
-  .fillColor('#4E5E4A')
-  .fontSize(14)
-  .font('Helvetica-Bold')
-  .text('Conclusión');
 
-doc.moveDown();
-
-doc
-  .fillColor('#444')
-  .fontSize(11)
-  .font('Helvetica')
-  .text(
-    `Durante el periodo analizado se registró una producción total de ${totalKg.toFixed(1)} KG. La información presentada corresponde a los registros almacenados en CafeNova y permite evaluar el comportamiento productivo de los cultivos gestionados.`
-  );
 
     doc.end();
   } catch (error) {
