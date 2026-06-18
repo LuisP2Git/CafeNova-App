@@ -51,4 +51,18 @@ app.use('/plagas', plagasRoutes);
 app.use('/chat',     chatRoutes);
 app.use('/',          iaRoutes);       // /ia y /ia/historial
 
+app.get('/', (req, res) => {
+    res.json({
+        estado: 'ok',
+        mensaje: 'CafeNova API funcionando'
+    });
+});
+
+app.use((err, req, res, next) => {
+    console.error('ERROR:', err);
+    res.status(500).json({
+        error: err.message
+    });
+});
+
 module.exports = app;
