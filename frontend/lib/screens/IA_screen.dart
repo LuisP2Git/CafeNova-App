@@ -55,7 +55,7 @@ class _IAScreenState extends State<IAScreen>
   Future<void> _cargarHistorial() async {
     try {
       final res = await http.get(
-        Uri.parse('http://localhost:3000/ia/historial'),
+        Uri.parse('https://cafenova-app-production.up.railway.app/ia/historial'),
         headers: {'Authorization': 'Bearer $token'},
       );
       final data = jsonDecode(res.body);
@@ -106,7 +106,7 @@ setState(() {
     _scrollAbajo();
     try {
       final res = await http.post(
-        Uri.parse('http://localhost:3000/ia'),
+        Uri.parse('https://cafenova-app-production.up.railway.app/ia'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -190,7 +190,7 @@ Responde en español, de forma estructurada, clara y práctica.''';
     try {
 
       final res = await http.post(
-        Uri.parse('http://localhost:3000/ia/imagen'),
+        Uri.parse('https://cafenova-app-production.up.railway.app/ia/imagen'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

@@ -70,7 +70,7 @@ class _InventarioScreenState
 
     final response = await http.get(
       Uri.parse(
-        'http://localhost:3000/inventario',
+        'https://cafenova-app-production.up.railway.app/inventario',
       ),
       headers: {
         'Authorization':
@@ -105,8 +105,8 @@ class _InventarioScreenState
     }
 
     final url = idEditando == null
-        ? 'http://localhost:3000/inventario'
-        : 'http://localhost:3000/inventario/$idEditando';
+        ? 'https://cafenova-app-production.up.railway.app/inventario'
+        : 'https://cafenova-app-production.up.railway.app/inventario/$idEditando';
 
     final response =
         idEditando == null
@@ -165,7 +165,7 @@ class _InventarioScreenState
 
     await http.delete(
       Uri.parse(
-        'http://localhost:3000/inventario/$id',
+        'https://cafenova-app-production.up.railway.app/inventario/$id',
       ),
       headers: {
         'Authorization':

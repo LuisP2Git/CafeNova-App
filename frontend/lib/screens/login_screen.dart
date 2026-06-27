@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _mostrarPassword = false;
 
   Future<void> login() async {
-    final url = Uri.parse('http://localhost:3000/login');
+    final url = Uri.parse('https://cafenova-app-production.up.railway.app/login');
 
     try {
       if (usuarioController.text.isEmpty || passwordController.text.isEmpty) {

@@ -3,7 +3,7 @@ import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const baseUrl = 'http://localhost:3000';
+  static const baseUrl = 'https://cafenova-app-production.up.railway.app';
 
   // =========================================================
   // HEADERS

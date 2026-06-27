@@ -61,7 +61,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
 
   Future<void> obtenerEmpleados() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/empleados'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/empleados'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -78,7 +78,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
 
   Future<void> obtenerFincas() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/fincas'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/fincas'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -112,7 +112,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
 
   Future<void> eliminarEmpleado(int id) async {
     await http.delete(
-      Uri.parse('http://localhost:3000/empleados/$id'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/empleados/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     obtenerEmpleados();
@@ -129,7 +129,7 @@ class _EmpleadosScreenState extends State<EmpleadosScreen> {
     }
 
     await http.put(
-      Uri.parse('http://localhost:3000/empleados/$idEditando'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/empleados/$idEditando'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json'

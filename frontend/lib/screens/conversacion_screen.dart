@@ -73,7 +73,7 @@ class _ConversacionScreenState
 
       final response = await http.get(
         Uri.parse(
-          'http://localhost:3000/chat/${widget.idEmpleado}',
+          'https://cafenova-app-production.up.railway.app/chat/${widget.idEmpleado}',
         ),
         headers: {
           'Authorization':
@@ -111,7 +111,7 @@ class _ConversacionScreenState
 
       final response = await http.post(
         Uri.parse(
-          'http://localhost:3000/chat',
+          'https://cafenova-app-production.up.railway.app/chat',
         ),
         headers: {
           'Authorization':

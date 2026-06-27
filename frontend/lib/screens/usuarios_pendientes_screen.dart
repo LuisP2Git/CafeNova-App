@@ -53,7 +53,7 @@ class _UsuariosPendientesScreenState
   Future<void> obtenerPendientes() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/usuarios/pendientes'),
+        Uri.parse('https://cafenova-app-production.up.railway.app/usuarios/pendientes'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -73,7 +73,7 @@ class _UsuariosPendientesScreenState
   Future<void> obtenerFincas() async {
 
   final response = await http.get(
-    Uri.parse('http://localhost:3000/fincas'),
+    Uri.parse('https://cafenova-app-production.up.railway.app/fincas'),
     headers: {
       'Authorization': 'Bearer $token',
     },
@@ -94,7 +94,7 @@ class _UsuariosPendientesScreenState
 
   await http.put(
     Uri.parse(
-      'http://localhost:3000/usuarios/aprobar/$id',
+      'https://cafenova-app-production.up.railway.app/usuarios/aprobar/$id',
     ),
     headers: {
       'Authorization': 'Bearer $token',
@@ -112,7 +112,7 @@ class _UsuariosPendientesScreenState
 
   Future<void> rechazarUsuario(int id) async {
     await http.delete(
-      Uri.parse('http://localhost:3000/usuarios/$id'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/usuarios/$id'),
       headers: {
         'Authorization': 'Bearer $token',
       },

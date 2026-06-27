@@ -94,7 +94,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerLotes() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/lotes'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/lotes'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode == 200) {
@@ -104,7 +104,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerCultivos() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/cultivo'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/cultivo'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode == 200) {
@@ -131,8 +131,8 @@ Future<void> cargarSesion() async {
     }
 
     final url = idEditando == null
-        ? 'http://localhost:3000/cultivo'
-        : 'http://localhost:3000/cultivo/$idEditando';
+        ? 'https://cafenova-app-production.up.railway.app/cultivo'
+        : 'https://cafenova-app-production.up.railway.app/cultivo/$idEditando';
         print('idLote: $idLote');
 print('tipoSeleccionado: $tipoSeleccionado');
 print('variedad: ${variedadController.text}');
@@ -163,7 +163,7 @@ print('fecha: ${fechaController.text}');
 
   Future<void> eliminarCultivo(int id) async {
     await http.delete(
-      Uri.parse('http://localhost:3000/cultivo/$id'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/cultivo/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     obtenerCultivos();

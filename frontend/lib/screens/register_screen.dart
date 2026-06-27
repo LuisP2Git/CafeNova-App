@@ -74,7 +74,7 @@ final List<String> cargos = [
       return;
     }
 
-    final url = Uri.parse('http://localhost:3000/registro');
+    final url = Uri.parse('https://cafenova-app-production.up.railway.app/registro');
 
     try {
       final response = await http.post(

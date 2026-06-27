@@ -78,7 +78,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerCultivos() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/cultivo'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/cultivo'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode == 200) {
@@ -88,7 +88,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerCosechas() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/cosecha'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/cosecha'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode == 200) {
@@ -117,8 +117,8 @@ Future<void> cargarSesion() async {
     }
 
     final url = idEditando == null
-        ? 'http://localhost:3000/cosecha'
-        : 'http://localhost:3000/cosecha/$idEditando';
+        ? 'https://cafenova-app-production.up.railway.app/cosecha'
+        : 'https://cafenova-app-production.up.railway.app/cosecha/$idEditando';
     final method = idEditando == null ? http.post : http.put;
 
     final res = await method(
@@ -144,7 +144,7 @@ Future<void> cargarSesion() async {
 
   Future<void> eliminarCosecha(int id) async {
     await http.delete(
-      Uri.parse('http://localhost:3000/cosecha/$id'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/cosecha/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     obtenerCosechas();

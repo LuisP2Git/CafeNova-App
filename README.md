@@ -265,6 +265,8 @@ El backend se ejecutará normalmente en:
 
 ```txt
 http://localhost:3000
+y
+https://cafenova-app-production.up.railway.app
 ```
 
 ---

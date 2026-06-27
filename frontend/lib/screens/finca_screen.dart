@@ -98,7 +98,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerFincas() async {
     final res = await http.get(
-      Uri.parse('http://localhost:3000/fincas'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/fincas'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode == 200) {
@@ -130,8 +130,8 @@ Future<void> cargarSesion() async {
         .firstWhere((d) => d['id'].toString() == departamentoSeleccionado)['name'];
 
     final url = idEditando == null
-        ? 'http://localhost:3000/fincas'
-        : 'http://localhost:3000/fincas/$idEditando';
+        ? 'https://cafenova-app-production.up.railway.app/fincas'
+        : 'https://cafenova-app-production.up.railway.app/fincas/$idEditando';
     final method = idEditando == null ? http.post : http.put;
 
     final res = await method(
@@ -157,7 +157,7 @@ Future<void> cargarSesion() async {
 
   Future<void> eliminarFinca(int id) async {
     await http.delete(
-      Uri.parse('http://localhost:3000/fincas/$id'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/fincas/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     obtenerFincas();

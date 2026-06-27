@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> obtenerLotes() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:3000/lotes'),
+        Uri.parse('https://cafenova-app-production.up.railway.app/lotes'),
         headers: {'Authorization': 'Bearer $token'},
       );
       if (response.statusCode == 200) {
@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final response = await http.get(
       Uri.parse(
-        'http://localhost:3000/chat/no-leidos',
+        'https://cafenova-app-production.up.railway.app/chat/no-leidos',
       ),
       headers: {
         'Authorization': 'Bearer $token',

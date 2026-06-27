@@ -83,7 +83,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerLotes() async {
     final response = await http.get(
-      Uri.parse('http://localhost:3000/lotes'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/lotes'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -93,7 +93,7 @@ Future<void> cargarSesion() async {
 
   Future<void> obtenerFincas() async {
     final response = await http.get(
-      Uri.parse('http://localhost:3000/fincas'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/fincas'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -118,8 +118,8 @@ Future<void> cargarSesion() async {
     }
 
     final url = idEditando == null
-        ? 'http://localhost:3000/lotes'
-        : 'http://localhost:3000/lotes/$idEditando';
+        ? 'https://cafenova-app-production.up.railway.app/lotes'
+        : 'https://cafenova-app-production.up.railway.app/lotes/$idEditando';
     final method = idEditando == null ? http.post : http.put;
 
     final response = await method(
@@ -155,7 +155,7 @@ Future<void> cargarSesion() async {
 
   Future<void> eliminarLote(int id) async {
     await http.delete(
-      Uri.parse('http://localhost:3000/lotes/$id'),
+      Uri.parse('https://cafenova-app-production.up.railway.app/lotes/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     obtenerLotes();

@@ -28,7 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final token = await SessionService.getToken();
 
       final response = await http.get(
-        Uri.parse('http://localhost:3000/chat/contactos'),
+        Uri.parse('https://cafenova-app-production.up.railway.app/chat/contactos'),
         headers: {
           'Authorization': 'Bearer $token',
         },

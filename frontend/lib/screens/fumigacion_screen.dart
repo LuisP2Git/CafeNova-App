@@ -106,7 +106,7 @@ Future<void> cargarSesion() async {
 
     final response = await http.get(
       Uri.parse(
-        'http://localhost:3000/cultivo',
+        'https://cafenova-app-production.up.railway.app/cultivo',
       ),
       headers: {
         'Authorization':
@@ -127,7 +127,7 @@ Future<void> cargarSesion() async {
 
     final response = await http.get(
       Uri.parse(
-        'http://localhost:3000/plagas',
+        'https://cafenova-app-production.up.railway.app/plagas',
       ),
       headers: {
         'Authorization':
@@ -174,8 +174,8 @@ Future<void> cargarSesion() async {
     }
 
     final url = idEditando == null
-        ? 'http://localhost:3000/plagas'
-        : 'http://localhost:3000/plagas/$idEditando';
+        ? 'https://cafenova-app-production.up.railway.app/plagas'
+        : 'https://cafenova-app-production.up.railway.app/plagas/$idEditando';
 
     final response =
         idEditando == null
@@ -266,7 +266,7 @@ Future<void> cargarSesion() async {
 
     await http.delete(
       Uri.parse(
-        'http://localhost:3000/plagas/$id',
+        'https://cafenova-app-production.up.railway.app/plagas/$id',
       ),
       headers: {
         'Authorization':
