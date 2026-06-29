@@ -88,8 +88,12 @@ function crearPlaga(req, res) {
     (err, result) => {
 
         if (err) {
+            console.error("========== ERROR PLAGAS ==========");
+            console.error(err);
             return res.status(500).json({
-                error: err.message
+                error: err.message,
+                code: err.code,
+                sqlMessage: err.sqlMessage,
             });
         }
 
