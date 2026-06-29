@@ -5,6 +5,11 @@ import 'package:frontend/screens/lotes_screen.dart';
 import 'package:frontend/screens/reportes_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 import 'package:frontend/screens/home_screen.dart';
+import 'package:frontend/utils/responsive.dart';
+import 'package:frontend/utils/app_spacing.dart';
+import 'package:frontend/utils/mensajes.dart';
+import 'package:frontend/widgets/responsive_card.dart';
+import 'package:frontend/services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
 
@@ -27,6 +32,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String correo = '';
   String rol = '';
   String cargo = '';
+
+  final editarNombreController = TextEditingController();
+  final editarCorreoController = TextEditingController();
+  final editarTelefonoController = TextEditingController();
+
+  final actualPasswordController = TextEditingController();
+  final nuevaPasswordController = TextEditingController();
+  final confirmarPasswordController = TextEditingController();
+
+  bool _mostrarActual = false;
+  bool _mostrarNueva = false;
+  bool _mostrarConfirmar = false;
 
   @override
   void initState() {
@@ -54,6 +71,319 @@ class _ProfileScreenState extends State<ProfileScreen> {
       (route) => false,
     );
   }
+
+  void _mostrarEditarPerfil() {
+  editarNombreController.text = nombre;
+  editarCorreoController.text = correo;
+  editarTelefonoController.text = '';
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Editar perfil"),
+        content: SizedBox(
+          width: Responsive.dialogWidth(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              TextField(
+                controller: editarNombreController,
+                decoration: const InputDecoration(
+                  labelText: "Nombre",
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              TextField(
+                controller: editarCorreoController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: "Correo",
+                  prefixIcon: Icon(Icons.email),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+
+              TextField(
+                controller: editarTelefonoController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: "Teléfono",
+                  prefixIcon: Icon(Icons.phone),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: _guardarPerfil,
+            child: const Text("Guardar"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+    Future<void> _guardarPerfil() async {
+
+  if (editarNombreController.text.trim().isEmpty) {
+  Mensajes.mostrar(
+    context,
+    "Ingrese un nombre",
+    esError: true,
+  );
+  return;
+}
+
+if (editarCorreoController.text.trim().isEmpty) {
+  Mensajes.mostrar(
+    context,
+    "Ingrese un correo",
+    esError: true,
+  );
+  return;
+}
+
+if (!editarCorreoController.text.contains('@')) {
+  Mensajes.mostrar(
+    context,
+    "Correo inválido",
+    esError: true,
+  );
+  return;
+}
+
+
+  try {
+    final datos = await SessionService.getDatosSesion();
+
+    final token = datos['token'];
+
+    final ok = await ApiService.actualizarPerfil(
+      token,
+      nombre: editarNombreController.text.trim(),
+      correo: editarCorreoController.text.trim(),
+      telefono: editarTelefonoController.text.trim(),
+    );
+
+    if (!ok) {
+      Mensajes.mostrar(
+        context,
+        "No fue posible actualizar el perfil",
+        esError: true,
+      );
+      return;
+    }
+
+    await SessionService.guardarSesion(
+      token: token,
+      nombre: editarNombreController.text.trim(),
+      correo: editarCorreoController.text.trim(),
+      rol: datos['rol'],
+      cargo: datos['cargo'],
+      idFinca: datos['id_finca'],
+      idEmpleado: datos['id_empleado'],
+    );
+
+    setState(() {
+      nombre = editarNombreController.text.trim();
+      correo = editarCorreoController.text.trim();
+    });
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    Mensajes.mostrar(
+      context,
+      "Perfil actualizado correctamente",
+    );
+
+  } catch (e) {
+    Mensajes.mostrar(
+      context,
+      "Error al actualizar el perfil",
+      esError: true,
+    );
+  }
+}
+
+  Future<void> _cambiarPassword() async {
+    if (actualPasswordController.text.isEmpty ||
+        nuevaPasswordController.text.isEmpty ||
+        confirmarPasswordController.text.isEmpty) {
+      Mensajes.mostrar(
+        context,
+        "Completa todos los campos",
+        esError: true,
+      );
+      return;
+    }
+    if (nuevaPasswordController.text !=
+        confirmarPasswordController.text) {
+      Mensajes.mostrar(
+        context,
+        "Las contraseñas no coinciden",
+        esError: true,
+      );
+      return;
+    }
+    if (nuevaPasswordController.text.length < 6) {
+      Mensajes.mostrar(
+        context,
+        "La contraseña debe tener mínimo 6 caracteres",
+        esError: true,
+      );
+      return;
+    }
+    if (actualPasswordController.text == nuevaPasswordController.text) {
+      Mensajes.mostrar(
+        context,
+        "La nueva contraseña debe ser diferente a la actual",
+        esError: true,
+      );
+      return;
+    }
+    try {
+      final datos = await SessionService.getDatosSesion();
+      final ok = await ApiService.cambiarPassword(
+        datos['token'],
+        passwordActual: actualPasswordController.text,
+        passwordNueva: nuevaPasswordController.text,
+      );
+      if (!ok) {
+        Mensajes.mostrar(
+          context,
+          "No fue posible cambiar la contraseña",
+          esError: true,
+        );
+        return;
+      }
+      actualPasswordController.clear();
+      nuevaPasswordController.clear();
+      confirmarPasswordController.clear();
+      if (!mounted) return;
+      Navigator.pop(context);
+      Mensajes.mostrar(
+        context,
+        "Contraseña actualizada correctamente",
+      );
+    } catch (e) {
+      Mensajes.mostrar(
+        context,
+        "Error al cambiar la contraseña",
+        esError: true,
+      );
+    }
+  }
+
+  void _mostrarDialogoCambiarPassword() {
+  actualPasswordController.clear();
+  nuevaPasswordController.clear();
+  confirmarPasswordController.clear();
+  _mostrarActual = false;
+  _mostrarNueva = false;
+  _mostrarConfirmar = false;
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Cambiar contraseña'),
+        content: SizedBox(
+          width: Responsive.dialogWidth(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: actualPasswordController,
+                obscureText: !_mostrarActual,
+                decoration: InputDecoration(
+                  labelText: "Contraseña actual",
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _mostrarActual
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _mostrarActual = !_mostrarActual;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: nuevaPasswordController,
+                obscureText: !_mostrarNueva,
+                decoration: InputDecoration(
+                  labelText: "Nueva contraseña",
+                  prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _mostrarNueva
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _mostrarNueva = !_mostrarNueva;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: confirmarPasswordController,
+                obscureText: !_mostrarConfirmar,
+                decoration: InputDecoration(
+                  labelText: "Confirmar contraseña",
+                  prefixIcon: const Icon(Icons.lock_reset),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _mostrarConfirmar
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _mostrarConfirmar = !_mostrarConfirmar;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: _cambiarPassword,
+            child: const Text("Guardar"),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void _onItemTapped(int index) async {
 
@@ -123,7 +453,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
 
-    final ancho = MediaQuery.of(context).size.width;
     
     final inicial =
         nombre.isNotEmpty ? nombre[0].toUpperCase() : '?';
@@ -134,8 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Container(
             width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+            padding: Responsive.screenPadding(context),
             decoration: const BoxDecoration(
               color: Color(0xFF6B7F66),
               borderRadius: BorderRadius.only(
@@ -151,9 +479,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Icon(Icons.person, color: Colors.white),
-                  const SizedBox(width: 10),
-                  const Text('Perfil',
-                      style: TextStyle(color: Colors.white, fontSize: 18)),
+                  const SizedBox(width: AppSpacing.md),
+                  Text('Perfil',
+                      style: TextStyle(color: Colors.white, fontSize: Responsive.subtitleSize(context),)),
                 ],
               ),
             ),
@@ -161,12 +489,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 24),
           CircleAvatar(
-            radius: ancho < 600 ? 45 : 60,
+            radius: Responsive.isMobile(context) ? 45 : 60,
             backgroundColor: const Color(0xFF6B7F66),
             child: Text(
               inicial,
-              style: const TextStyle(
-                  fontSize: 38,
+              style: TextStyle(
+                  fontSize: Responsive.titleSize(context) + 8,
                   color: Colors.white,
                   fontWeight: FontWeight.bold),
             ),
@@ -175,7 +503,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 12),
 
           Text(nombre, style: TextStyle
-          (fontSize: ancho < 600 ? 20 : 24, fontWeight: FontWeight.bold,),
+          (fontSize: Responsive.subtitleSize(context) + 4, fontWeight: FontWeight.bold,),
           ),
           Text(
             correo.isNotEmpty ? correo : 'Sin correo registrado',
@@ -207,21 +535,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 20),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: Responsive.screenPadding(context),
               child: Column(
                 children: [
                   _cardItem(Icons.email_outlined, 'Correo', correo),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.md),
                   _cardItem(Icons.badge_outlined, 'Rol', rol.isNotEmpty ? rol : '-'),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.md),
                   _cardItem(Icons.work_outline, 'Cargo', cargo.isNotEmpty ? cargo : '-',),
-                  const SizedBox(height: 10),
-                  _cardItem(Icons.edit_outlined, 'Editar perfil', null,
-                      onTap: () {}),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.md),
+                  _cardItem(Icons.edit_outlined, 'Editar perfil', null, onTap: _mostrarEditarPerfil,),
+                  const SizedBox(height: AppSpacing.md),
+                  _cardItem(Icons.lock_outline, 'Cambiar contraseña', null, onTap: _mostrarDialogoCambiarPassword,),
+                  const SizedBox(height: AppSpacing.md),
                   _cardItem(Icons.sync, 'Sincronizar datos', null,
                       onTap: () {}),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.md),
                   GestureDetector(
                     onTapDown: (_) => setState(() => _pressed = true),
                     onTapUp: (_) => setState(() => _pressed = false),
@@ -278,20 +607,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _cardItem(IconData icon, String label, String? value,
       {VoidCallback? onTap}) {
-    return GestureDetector(
+    return ResponsiveCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.grey.shade200,
-                blurRadius: 5,
-                offset: const Offset(2, 2))
-          ],
-        ),
         child: Row(
           children: [
             Icon(icon, color: const Color(0xFF6B7F66)),
@@ -314,7 +631,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 size: 14, color: Colors.grey),
           ],
         ),
-      ),
     );
+  }
+
+  @override
+  void dispose() {
+    editarNombreController.dispose();
+    editarCorreoController.dispose();
+    editarTelefonoController.dispose();
+    actualPasswordController.dispose();
+    nuevaPasswordController.dispose();
+    confirmarPasswordController.dispose();
+    super.dispose();
   }
 }

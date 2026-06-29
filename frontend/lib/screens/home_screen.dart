@@ -17,6 +17,10 @@ import 'package:frontend/screens/cultivos_screen.dart';
 import 'package:frontend/widgets/app_bottom_nav.dart';
 import 'package:frontend/screens/fumigacion_screen.dart';
 import 'package:frontend/screens/chat_screen.dart';
+import 'package:frontend/utils/responsive.dart';
+import 'package:frontend/utils/app_spacing.dart';
+
+import 'package:frontend/widgets/responsive_card.dart';
 
 class HomeScreen extends StatefulWidget {
 
@@ -290,7 +294,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.screenPadding(context).horizontal / 2,
+              vertical: AppSpacing.lg,),
             decoration: BoxDecoration(
               color: rolColor,
               borderRadius: const BorderRadius.only(
@@ -300,52 +306,98 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: SafeArea(
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(children: [
-                    Icon(Icons.eco, color: Colors.white),
-                    SizedBox(width: 10),
-                    Text('Cafe Nova',
-                        style: TextStyle(color: Colors.white, fontSize: 18)),
-                  ]),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(nombre,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.eco,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Flexible(
+                          child: Text(
+                            'Cafe Nova',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: Responsive.subtitleSize(context),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: AppSpacing.md),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          nombre,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold)),
-                      if (correoResuelto.isNotEmpty)
-                        Text(correoResuelto,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        if (correoResuelto.isNotEmpty)
+                          Text(
+                            correoResuelto,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
                             style: const TextStyle(
-                                color: Colors.white70, fontSize: 11)),
-                      const Row(children: [
-                        Icon(Icons.circle, size: 8, color: Colors.greenAccent),
-                        SizedBox(width: 4),
-                        Text('Conectado',
-                            style: TextStyle(color: Colors.white, fontSize: 12)),
-                      ]),
-                    ],
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+
+                        const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: Colors.greenAccent,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Conectado',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
+              )
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: Responsive.screenPadding(context),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Dashboard',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 15),
+                  Text('Dashboard', style: TextStyle(
+                    fontSize: Responsive.titleSize(context),fontWeight: FontWeight.bold,),),
+                  const SizedBox(height: AppSpacing.md),
                   GridView.count(
-                    crossAxisCount: 2,
+                    crossAxisCount: Responsive.columns(context),
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.2,
+                    crossAxisSpacing: AppSpacing.md,
+                    mainAxisSpacing: AppSpacing.md,
+                    childAspectRatio: Responsive.isDesktop(context)? 1.30: Responsive.isTablet(context)? 1.20: 1.05,
                     children: [
                       if (rol == 'admin')
                         _dashCard('Fincas', Icons.park, irAFincas),
@@ -402,19 +454,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15)),
+                  const SizedBox(height: AppSpacing.lg),
+                  ResponsiveCard(
                     child: Column(children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Row(children: [
                             Icon(Icons.grid_view, size: 18),
-                            SizedBox(width: 8),
+                            SizedBox(width: AppSpacing.sm),
                             Text('Mis Lotes',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                           ]),
@@ -424,10 +472,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const Icon(Icons.arrow_forward_ios, size: 14)),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppSpacing.sm,),
                       lotes.isEmpty
                           ? const Padding(
-                              padding: EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(AppSpacing.sm),
                               child: Text('No hay lotes disponibles'))
                           : Column(
                               children: lotes
@@ -452,93 +500,79 @@ class _HomeScreenState extends State<HomeScreen> {
   VoidCallback onTap, {
   int badge = 0,
 }) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 3,
-            offset: Offset(0, 2),
-          )
-        ],
-      ),
-      child: Stack(
-        children: [
-
-          Center(
-            child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
-              children: [
+  return ResponsiveCard(
+  onTap: onTap,
+    child: Stack(
+      children: [
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
                 Icon(
-                  icono,
-                  size: 35,
-                  color: const Color(0xFF6B7F66),
+                icono,
+                size: Responsive.iconSize(context),
+                color: const Color(0xFF6B7F66),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                titulo,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: Responsive.bodySize(context),
+                  fontWeight: FontWeight.w500,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontWeight:
-                        FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
 
-          if (badge > 0)
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                width: 22,
-                height: 22,
-                alignment: Alignment.center,
-                decoration:
-                    const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  badge > 99
-                      ? '99+'
-                      : badge.toString(),
-                  style:
-                      const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
+        if (badge > 0)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              width: 22,
+              height: 22,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                badge > 99 ? '99+' : badge.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     ),
   );
 }
   Widget _loteItem(String nombre, String finca) {
-    return GestureDetector(
+    return ResponsiveCard(
       onTap: irALotes,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        decoration: BoxDecoration(
-            color: const Color(0xFFF5F1ED),
-            borderRadius: BorderRadius.circular(10)),
-        child: Row(children: [
-          const Icon(Icons.location_on, color: Color(0xFF6B7F66), size: 18),
-          const SizedBox(width: 10),
-          Expanded(child: Text('$nombre — $finca')),
-          const Icon(Icons.arrow_forward_ios, size: 14),
-        ]),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.location_on,
+            color: Color(0xFF6B7F66),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              '$nombre — $finca',
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 14,
+          ),
+        ],
       ),
     );
   }

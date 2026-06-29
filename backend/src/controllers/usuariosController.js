@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const bcrypt = require('bcrypt');
 
 /** GET /usuarios/pendientes */
 function obtenerPendientes(req, res) {
@@ -194,8 +195,206 @@ function eliminarUsuario(req, res) {
     );
 }
 
+/** GET /usuarios/perfil */
+function obtenerPerfil(req, res) {
+
+    const idUsuario = req.usuario.id_usuario;
+
+    db.query(
+        `
+        SELECT
+            u.id_usuario,
+            u.nombre_usuario,
+            u.correo,
+            u.rol,
+            u.estado,
+            u.id_finca,
+            e.cargo,
+            e.telefono
+        FROM usuarios u
+        LEFT JOIN empleado e
+            ON u.id_usuario = e.id_usuario
+        WHERE u.id_usuario = ?
+        `,
+        [idUsuario],
+        (err, results) => {
+
+            if (err) {
+                return res.status(500).json({
+                    error: err.message
+                });
+            }
+
+            if (results.length === 0) {
+                return res.status(404).json({
+                    error: 'Usuario no encontrado'
+                });
+            }
+
+            res.json(results[0]);
+        }
+    );
+}
+
+/** PUT /usuarios/perfil */
+function actualizarPerfil(req, res) {
+
+    const idUsuario = req.usuario.id_usuario;
+
+    const {
+        nombre_usuario,
+        correo,
+        telefono
+    } = req.body;
+
+    db.beginTransaction((err) => {
+
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
+        }
+
+        db.query(
+            `
+            UPDATE usuarios
+            SET
+                nombre_usuario = ?,
+                correo = ?
+            WHERE id_usuario = ?
+            `,
+            [
+                nombre_usuario,
+                correo,
+                idUsuario
+            ],
+            (err2) => {
+
+                if (err2) {
+                    return db.rollback(() =>
+                        res.status(500).json({
+                            error: err2.message
+                        })
+                    );
+                }
+
+                db.query(
+                    `
+                    UPDATE empleado
+                    SET telefono = ?
+                    WHERE id_usuario = ?
+                    `,
+                    [
+                        telefono,
+                        idUsuario
+                    ],
+                    (err3) => {
+
+                        if (err3) {
+                            return db.rollback(() =>
+                                res.status(500).json({
+                                    error: err3.message
+                                })
+                            );
+                        }
+
+                        db.commit((err4) => {
+
+                            if (err4) {
+                                return db.rollback(() =>
+                                    res.status(500).json({
+                                        error: err4.message
+                                    })
+                                );
+                            }
+
+                            res.json({
+                                message: 'Perfil actualizado correctamente'
+                            });
+                        });
+                    }
+                );
+            }
+        );
+    });
+}
+
+/** PUT /usuarios/password */
+async function cambiarPassword(req, res) {
+
+    const idUsuario = req.usuario.id_usuario;
+
+    const {
+        passwordActual,
+        passwordNueva
+    } = req.body;
+
+    db.query(
+        `
+        SELECT password
+        FROM usuarios
+        WHERE id_usuario = ?
+        `,
+        [idUsuario],
+        async (err, results) => {
+
+            if (err) {
+                return res.status(500).json({
+                    error: err.message
+                });
+            }
+
+            if (results.length === 0) {
+                return res.status(404).json({
+                    error: 'Usuario no encontrado'
+                });
+            }
+
+            const coincide = await bcrypt.compare(
+                passwordActual,
+                results[0].password
+            );
+
+            if (!coincide) {
+                return res.status(400).json({
+                    error: 'La contraseña actual es incorrecta'
+                });
+            }
+
+            const hash = await bcrypt.hash(passwordNueva, 10);
+
+            db.query(
+                `
+                UPDATE usuarios
+                SET password = ?
+                WHERE id_usuario = ?
+                `,
+                [
+                    hash,
+                    idUsuario
+                ],
+                (err2) => {
+
+                    if (err2) {
+                        return res.status(500).json({
+                            error: err2.message
+                        });
+                    }
+
+                    res.json({
+                        message: 'Contraseña actualizada correctamente'
+                    });
+                }
+            );
+        }
+    );
+}
+
 module.exports = {
     obtenerPendientes,
     aprobarUsuario,
-    eliminarUsuario
+    eliminarUsuario,
+    obtenerPerfil,
+    actualizarPerfil,
+    cambiarPassword
 };

@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/utils/mensajes.dart';
 import 'package:frontend/services/session_service.dart';
+import 'package:frontend/utils/responsive.dart';
+import 'package:frontend/utils/app_spacing.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final usuarioController = TextEditingController();
   final passwordController = TextEditingController();
   bool _mostrarPassword = false;
+  bool _presionandoRegistro = false;
 
   Future<void> login() async {
     final url = Uri.parse('https://cafenova-app-production.up.railway.app/login');
@@ -84,15 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
 
-    final height = MediaQuery.of(context).size.height;
-
-    // 🔥 tamaños dinámicos
-    final iconSize = height < 700 ? 80.0 : 120.0;
-    final titleSize = height < 700 ? 35.0 : 50.0;
-    final subtitleSize = height < 700 ? 18.0 : 25.0;
-    final spacingLarge = height < 700 ? 15.0 : 30.0;
-    final spacingMedium = height < 700 ? 10.0 : 20.0;
-
     return Scaffold(
       backgroundColor: const Color(0xFFDCD6D0),
 
@@ -106,9 +100,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Center(
                   child: Container(
-                    width: constraints.maxWidth > 600 ? 500 : double.infinity,
-                    margin: const EdgeInsets.all(15),
-                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+                    width: Responsive.formWidth(context),
+                    margin: Responsive.screenPadding(context),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl,),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F1ED),
                       borderRadius: BorderRadius.circular(20),
@@ -120,43 +114,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         Icon(
                           Icons.eco,
-                          size: iconSize,
+                          size: Responsive.logoSize(context),
                           color: const Color.fromARGB(255, 139, 196, 93),
                         ),
 
-                        SizedBox(height: spacingMedium),
+                        const SizedBox(height: AppSpacing.md),
 
                         Text(
-                          "Cafenova",
+                          "CafeNova",
                           style: TextStyle(
-                            fontSize: titleSize,
+                            fontSize: Responsive.titleSize(context) + 8,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF6B7F66),
                           ),
                         ),
 
-                        SizedBox(height: spacingMedium),
+                        const SizedBox(height: AppSpacing.md),
 
                         Text(
                           "Te damos la bienvenida a cafenova",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: subtitleSize,
+                            fontSize: Responsive.subtitleSize(context),
                             color: const Color.fromARGB(255, 79, 88, 76),
                           ),
                         ),
 
-                        SizedBox(height: spacingMedium),
+                        const SizedBox(height: AppSpacing.md),
 
                         Text(
                           "Para comenzar, inicia sesión.",
                           style: TextStyle(
                             color: const Color.fromARGB(255, 108, 133, 100),
-                            fontSize: subtitleSize - 5,
+                            fontSize: Responsive.bodySize(context),
                           ),
                         ),
 
-                        SizedBox(height: spacingLarge),
+                        const SizedBox(height: AppSpacing.xl),
 
                         TextField(
                           controller: usuarioController,
@@ -171,34 +165,34 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        SizedBox(height: spacingMedium),
+                        const SizedBox(height: AppSpacing.md),
 
                       TextField(
                         controller: passwordController,
-  obscureText: !_mostrarPassword,
-  decoration: InputDecoration(
-    hintText: "Contraseña",
-    filled: true,
-    fillColor: Colors.grey.shade200,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    suffixIcon: IconButton(
-      icon: Icon(
-        _mostrarPassword
-            ? Icons.visibility
-            : Icons.visibility_off,
-      ),
-      onPressed: () {
-        setState(() {
-          _mostrarPassword = !_mostrarPassword;
-        });
-      },
-    ),
-  ),
-),
-                        SizedBox(height: spacingLarge),
+                          obscureText: !_mostrarPassword,
+                          decoration: InputDecoration(
+                            hintText: "Contraseña",
+                            filled: true,
+                            fillColor: Colors.grey.shade200,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _mostrarPassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _mostrarPassword = !_mostrarPassword;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
 
                         SizedBox(
                           width: double.infinity,
@@ -206,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: login,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6B7F66),
-                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              padding: EdgeInsets.symmetric(vertical: Responsive.buttonHeight(context) / 3,),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -221,21 +215,58 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        SizedBox(height: spacingMedium),
+                        const SizedBox(height: AppSpacing.md),
 
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const RegisterScreen(),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            splashColor: const Color(0xFF6B7F66).withValues(alpha: 0.15),
+                            highlightColor: const Color(0xFF6B7F66).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () async {
+                              setState(() => _presionandoRegistro = true);
+                              await Future.delayed(
+                                const Duration(milliseconds: 120),
+                              );
+                              if (!mounted) return;
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterScreen(),
+                                ),
+                              );
+                              if (mounted) {
+                                setState(() => _presionandoRegistro = false);
+                              }
+                            },
+                            child: AnimatedScale(
+                              scale: _presionandoRegistro ? 0.97 : 1.0,
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeInOut,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _presionandoRegistro
+                                      ? const Color(0xFF6B7F66).withValues(alpha: 0.12)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "¿No tienes cuenta? Regístrate",
+                                    style: TextStyle(
+                                      color: const Color(0xFF6B7F66),
+                                      fontSize: Responsive.bodySize(context),
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            );
-                          },
-                          child: const Text(
-                            "No tienes cuenta? Regístrate",
-                            style: TextStyle(
-                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),

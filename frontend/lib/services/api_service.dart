@@ -238,4 +238,55 @@ class ApiService {
       return false;
     }
   }
+  
+  // =========================================================
+  // PERFIL
+  // =========================================================
+
+  static Future<Map<String, dynamic>> obtenerPerfil(
+    String token,
+    ) async {
+      final res = await http.get(
+        Uri.parse('$baseUrl/usuarios/perfil'),
+        headers: headers(token),
+        );
+      if (res.statusCode != 200) {
+    throw Exception('Error al obtener perfil');
+    }
+    return jsonDecode(res.body);
+  }
+
+  static Future<bool> actualizarPerfil(
+    String token, {
+    required String nombre,
+    required String correo,
+    required String telefono,
+  }) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/usuarios/perfil'),
+      headers: headers(token),
+      body: jsonEncode({
+        'nombre_usuario': nombre,
+        'correo': correo,
+        'telefono': telefono,
+      }),
+    );
+    return res.statusCode == 200;
+  }
+
+  static Future<bool> cambiarPassword(
+    String token, {
+    required String passwordActual,
+    required String passwordNueva,
+  }) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/usuarios/password'),
+      headers: headers(token),
+      body: jsonEncode({
+        'passwordActual': passwordActual,
+        'passwordNueva': passwordNueva,
+      }),
+    );
+    return res.statusCode == 200;
+  }
 }
