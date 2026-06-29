@@ -548,46 +548,9 @@ if (!editarCorreoController.text.contains('@')) {
                   const SizedBox(height: AppSpacing.md),
                   _cardItem(Icons.lock_outline, 'Cambiar contraseña', null, onTap: _mostrarDialogoCambiarPassword,),
                   const SizedBox(height: AppSpacing.md),
-                  _cardItem(Icons.sync, 'Sincronizar datos', null,
-                      onTap: () {}),
+                  _cardItem(Icons.sync, 'Sincronizar datos', null,onTap: () {}),
                   const SizedBox(height: AppSpacing.md),
-                  GestureDetector(
-                    onTapDown: (_) => setState(() => _pressed = true),
-                    onTapUp: (_) => setState(() => _pressed = false),
-                    onTapCancel: () => setState(() => _pressed = false),
-                    onTap: () => logout(context),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: _pressed
-                            ? Colors.red.shade50
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.grey.shade200,
-                              blurRadius: 5,
-                              offset: const Offset(2, 2))
-                        ],
-                      ),
-                      child: Row(
-                        children: const [
-                          Icon(Icons.logout, color: Colors.red),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text('Cerrar sesión',
-                                style: TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                          Icon(Icons.arrow_forward_ios,
-                              size: 14, color: Colors.red),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _cardItem(Icons.logout, 'Cerrar sesión', null, onTap: () => logout(context),),
                 ],
               ),
             ),
@@ -596,30 +559,48 @@ if (!editarCorreoController.text.contains('@')) {
       ),
 
       bottomNavigationBar: AppBottomNav(
-  currentIndex: selectedIndex,
-  onTabSelected: _onItemTapped,
-  puedeVerReportes:
-      rol == 'admin' ||
-      cargo == 'Auxiliar Administrativo',
-),
+      currentIndex: selectedIndex,
+      onTabSelected: _onItemTapped,
+      puedeVerReportes:
+        rol == 'admin' ||
+        cargo == 'Auxiliar Administrativo',
+      ),
     );
   }
 
   Widget _cardItem(IconData icon, String label, String? value,
       {VoidCallback? onTap}) {
-    return ResponsiveCard(
-      onTap: onTap,
+    final esCerrarSesion = label == 'Cerrar sesión';
+    return AnimatedScale(
+      scale: _pressed && esCerrarSesion ? 0.97 : 1,
+      duration: const Duration(milliseconds: 120),
+      child:ResponsiveCard(
+      onTap: () {
+        if (esCerrarSesion) {
+          setState(() => _pressed = true);
+          Future.delayed(
+            const Duration(milliseconds: 120),
+            () {
+              if (!mounted) return;
+              setState(() => _pressed = false);
+              onTap?.call();
+            },
+          );
+        } else {
+          onTap?.call();
+        }
+      },
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF6B7F66)),
+            Icon(icon, color: esCerrarSesion ? Colors.red : const Color(0xFF6B7F66),),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 13)),
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, 
+                      color: esCerrarSesion ? Colors.red : Colors.black87,),),
                   if (value != null && value.isNotEmpty)
                     Text(value,
                         style: const TextStyle(
@@ -627,10 +608,11 @@ if (!editarCorreoController.text.contains('@')) {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                size: 14, color: Colors.grey),
+            Icon(Icons.arrow_forward_ios, size: 14, 
+            color: esCerrarSesion ? Colors.red : Colors.grey,),
           ],
         ),
+      ),
     );
   }
 
