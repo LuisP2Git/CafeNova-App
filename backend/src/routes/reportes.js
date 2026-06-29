@@ -80,10 +80,14 @@ router.get('/cosecha-mensual', verificarToken, async (req, res) => {
     res.json(rows);
 
   } catch (e) {
-
+    console.error("===== ERROR COSECHA MENSUAL =====");
     console.error(e);
-
-    res.status(500).json([]);
+    res.status(500).json({
+      error: e.message,
+      code: e.code,
+      sqlMessage: e.sqlMessage,
+      stack: e.stack,
+    });
   }
 });
 
