@@ -226,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> irAFumigacion() async {
     await Navigator.push(context,
-       MaterialPageRoute(builder: (_) => const FumigacionScreen()));
+        MaterialPageRoute(builder: (_) => const FumigacionScreen()));
   }
 
   void _onItemTapped(int index) {
@@ -475,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: AppSpacing.sm,),
                       lotes.isEmpty
                           ? const Padding(
-                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              padding: EdgeInsets.all(AppSpacing.sm),
                               child: Text('No hay lotes disponibles'))
                           : Column(
                               children: lotes
