@@ -36,46 +36,26 @@ router.get('/cosecha-mensual', verificarToken, async (req, res) => {
 
     const rows = await run(`
       SELECT
-
-        MONTH(co.fecha_cosecha) AS numero_mes,
-
-        CASE MONTH(co.fecha_cosecha)
-
-          WHEN 1 THEN 'Ene'
-          WHEN 2 THEN 'Feb'
-          WHEN 3 THEN 'Mar'
-          WHEN 4 THEN 'Abr'
-          WHEN 5 THEN 'May'
-          WHEN 6 THEN 'Jun'
-          WHEN 7 THEN 'Jul'
-          WHEN 8 THEN 'Ago'
-          WHEN 9 THEN 'Sep'
-          WHEN 10 THEN 'Oct'
-          WHEN 11 THEN 'Nov'
-          WHEN 12 THEN 'Dic'
-
-        END AS mes,
-
-        COALESCE(SUM(co.cantidad_kg),0) AS total_kg
-
+          YEAR(co.fecha_cosecha) AS anio,
+          MONTH(co.fecha_cosecha) AS numero_mes,
+          DATE_FORMAT(co.fecha_cosecha, '%b') AS mes,
+          COALESCE(SUM(co.cantidad_kg), 0) AS total_kg
       FROM cosecha co
-
       INNER JOIN cultivo cu
-        ON cu.id_cultivo = co.id_cultivo
-
+          ON cu.id_cultivo = co.id_cultivo
       INNER JOIN lote l
-        ON l.id_lote = cu.id_lote
-
+          ON l.id_lote = cu.id_lote
       INNER JOIN finca f
-        ON f.id_finca = l.id_finca
-
+          ON f.id_finca = l.id_finca
       WHERE f.id_admin = ?
-
-      GROUP BY MONTH(co.fecha_cosecha)
-
-      ORDER BY numero_mes ASC
-
-    `, [idUsuario]);
+      GROUP BY
+          YEAR(co.fecha_cosecha),
+          MONTH(co.fecha_cosecha),
+          DATE_FORMAT(co.fecha_cosecha, '%b')
+      ORDER BY
+          anio ASC,
+          numero_mes ASC
+      `, [idUsuario]);
 
     res.json(rows);
 
@@ -215,14 +195,9 @@ router.get('/mejor-cultivo', verificarToken, async (req, res) => {
     }
 
     res.json({
-
-      nombre:
-          '${rows[0].tipo_cultivo} — ${rows[0].variedad}',
-
-      total_kg:
-          parseFloat(rows[0].total_kg || 0),
-
-    });
+  nombre: `${rows[0].tipo_cultivo} — ${rows[0].variedad}`,
+  total_kg: parseFloat(rows[0].total_kg || 0),
+});
 
   } catch (e) {
 
@@ -481,15 +456,17 @@ router.get('/pdf', verificarToken, async (req, res) => {
 
 let query = `
 SELECT
-  DATE_FORMAT(co.fecha_cosecha, '%Y-%m') AS mes,
-  SUM(co.cantidad_kg) AS total_kg
+    YEAR(co.fecha_cosecha) AS anio,
+    MONTH(co.fecha_cosecha) AS numero_mes,
+    DATE_FORMAT(co.fecha_cosecha, '%Y-%m') AS mes,
+    SUM(co.cantidad_kg) AS total_kg
 FROM cosecha co
 INNER JOIN cultivo cu
-  ON cu.id_cultivo = co.id_cultivo
+    ON cu.id_cultivo = co.id_cultivo
 INNER JOIN lote l
-  ON l.id_lote = cu.id_lote
+    ON l.id_lote = cu.id_lote
 INNER JOIN finca f
-  ON f.id_finca = l.id_finca
+    ON f.id_finca = l.id_finca
 WHERE f.id_admin = ?
 `;
 
@@ -512,8 +489,13 @@ if (loteId) {
 }
 
 query += `
-GROUP BY mes
-ORDER BY mes ASC
+GROUP BY
+    YEAR(co.fecha_cosecha),
+    MONTH(co.fecha_cosecha),
+    DATE_FORMAT(co.fecha_cosecha, '%Y-%m')
+ORDER BY
+    anio ASC,
+    numero_mes ASC
 `;
 
 const mensual =
