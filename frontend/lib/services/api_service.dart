@@ -1,6 +1,8 @@
 import 'dart:convert';
-import 'dart:html' as html;
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class ApiService {
   static const baseUrl = 'https://cafenova-app-production.up.railway.app';
@@ -190,21 +192,16 @@ class ApiService {
       );
 
       if (res.statusCode == 200) {
-        final blob = html.Blob([res.bodyBytes]);
+        final dir = await getApplicationDocumentsDirectory();
+        final file = File(
+          '${dir.path}/reporte_cafenova.pdf',
+        );
 
-        final url = html.Url.createObjectUrlFromBlob(blob);
+        await file.writeAsBytes(res.bodyBytes);
+        await OpenFilex.open(file.path);
 
-        html.AnchorElement(href: url)
-          ..setAttribute(
-            'download',
-            'reporte_cafenova.pdf',
-          )
-          ..click();
-
-        html.Url.revokeObjectUrl(url);
-
-        return true;
-      }
+              return true;
+}
 
       return false;
     } catch (e) {

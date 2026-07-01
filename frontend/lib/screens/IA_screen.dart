@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:html' as html;
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:frontend/services/session_service.dart';
 
@@ -136,30 +137,22 @@ setState(() {
   }
 
   // ─── Selección y análisis de imagen ────────────────────────────────────────
+  final ImagePicker _picker = ImagePicker();
+
   Future<void> _seleccionarImagen() async {
-    final uploadInput = html.FileUploadInputElement()
-      ..accept = 'image/*';
-    uploadInput.click();
-
-    await uploadInput.onChange.first;
-    if (uploadInput.files!.isEmpty) return;
-
-    final file = uploadInput.files![0];
-    final mimeType = file.type;
-    final reader = html.FileReader();
-    reader.readAsArrayBuffer(file);
-    await reader.onLoad.first;
-
-    final bytes = reader.result as Uint8List;
+    final XFile? imagen = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (imagen == null) return;
+    final bytes = await File(imagen.path).readAsBytes();
     final base64 = base64Encode(bytes);
-
     setState(() {
       _imagenSeleccionada = bytes;
       _imagenBase64 = base64;
-      _imagenMimeType = mimeType;
+      _imagenMimeType = 'image/jpeg';
       _resultadoImagen = null;
     });
-  }
+}
 
   Future<void> _analizarImagen() async {
     if (_imagenBase64 == null) return;
