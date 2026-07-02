@@ -276,7 +276,7 @@ List get _resumenCalidad {
     correo = datos['correo'] ?? '';
     rol = datos['rol'] ?? '';
     cargo = datos['cargo'] ?? '';
-    if (token == null) return;
+    if (token == null) {return;}
     await cargarDatos();
   }
 
@@ -671,7 +671,7 @@ List get _resumenCalidad {
                     x: e.key,
                     barRods: [
                       BarChartRodData(
-                        toY: (e.value['total_kg'] ?? 0).toDouble(),
+                        toY: double.tryParse((e.value['total_kg'] ?? '0').toString(),) ?? 0,
                         color: const Color(0xFF6B7F66),
                         width: 14,
                         borderRadius: const BorderRadius.vertical(
@@ -705,9 +705,9 @@ List get _resumenCalidad {
                               : const Color(0xFFEF5350);
                       return PieChartSectionData(
                         color: color,
-                        value: (e['total_kg'] ?? 0).toDouble(),
+                        value: double.tryParse((e['total_kg'] ?? '0').toString(),) ?? 0,
                         title:
-                            '${(e['total_kg'] ?? 0).toStringAsFixed(0)}kg',
+                            '${(double.tryParse((e['total_kg'] ?? '0').toString(),) ?? 0).toStringAsFixed(1)}kg',
                         titleStyle: const TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -738,7 +738,7 @@ List get _resumenCalidad {
                               borderRadius: BorderRadius.circular(3))),
                       const SizedBox(width: 6),
                       Text(
-                          '${e['calidad']}: ${(e['total_kg'] as double).toStringAsFixed(1)}kg',
+                          '${e['calidad']}: ${(double.tryParse(e['total_kg'].toString()) ?? 0).toStringAsFixed(1)} kg',
                           style: const TextStyle(fontSize: 12)),
                     ]),
                   );
@@ -1293,7 +1293,7 @@ List get _resumenCalidad {
                   x: e.key,
                   barRods: [
                     BarChartRodData(
-                      toY: tot,
+                      toY: double.tryParse(tot.toString(),) ?? 0,
                       color: const Color(0xFF6B7F66),
                       width: 20,
                       borderRadius: const BorderRadius.vertical(
@@ -1344,10 +1344,14 @@ List get _resumenCalidad {
                 style: const TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 13),
               ),
-              if (c['lote'] != null && (c['lote'] as String).isNotEmpty)
-                Text('Lote: ${c['lote']}',
-                    style: const TextStyle(
-                        fontSize: 10, color: Colors.blueGrey)),
+              if (c['nombre_lote'] != null && c['nombre_lote'].toString().isNotEmpty)
+                Text(
+                  'Lote: ${c['nombre_lote']}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.blueGrey,
+                  ),
+                ),
               if (c['fecha_cosecha'] != null)
                 Text(_fechaLarga(c['fecha_cosecha']),
                     style: const TextStyle(
